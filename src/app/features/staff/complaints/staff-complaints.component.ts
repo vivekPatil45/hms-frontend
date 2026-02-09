@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Complaint } from '../../../models/complaint.model';
+import { StaffService } from '../../../core/services/staff.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-staff-complaints',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, StatusBadgeComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, StatusBadgeComponent],
   template: `
     <div class="space-y-6 animate-fade-in">
       <div>
@@ -134,54 +137,186 @@ import { Complaint } from '../../../models/complaint.model';
   `,
   styles: []
 })
-export class StaffComplaintsComponent {
-  complaints: Complaint[] = [
-    {
-      id: 1,
-      customerId: 1,
-      title: 'AC not cooling',
-      description: 'The air conditioner in room 101 is not cooling properly even at lowest setting. Customer has requested immediate attention.',
-      category: 'Maintenance',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-      createdAt: '2024-03-16T10:30:00Z',
-      assignedToId: 1
-    },
-    {
-      id: 4,
-      customerId: 4,
-      title: 'Broken TV remote',
-      description: 'TV remote control is not working. Batteries have been replaced but issue persists.',
-      category: 'Maintenance',
-      priority: 'LOW',
-      status: 'OPEN',
-      createdAt: '2024-03-17T14:20:00Z',
-      assignedToId: 1
-    },
-    {
-      id: 5,
-      customerId: 5,
-      title: 'WiFi connectivity issues',
-      description: 'Internet connection keeps dropping every few minutes. Unable to work remotely.',
-      category: 'Technical',
-      priority: 'MEDIUM',
-      status: 'RESOLVED',
-      createdAt: '2024-03-17T08:00:00Z',
-      assignedToId: 1
-    }
-  ];
+export class StaffComplaintsComponent implements OnInit {
+  complaints: Complaint[] = [];
+  filteredComplaints: Complaint[] = [];
+  selectedComplaint: Complaint | null = null;
+  isLoading = false;
+  isSubmitting = false;
+  errorMessage = '';
+
+  // Filter properties
+  filters = {
+    status: '',
+    priority: '',
+    search: ''
+  };
+
+  // Form data
+  actionForm = {
+    action: '',
+    notes: ''
+  };
+
+  updateStatusForm = {
+    status: '',
+    notes: ''
+  };
+
+  resolveForm = {
+    resolutionNotes: ''
+  };
+
+  constructor(
+    private staffService: StaffService,
+    private toastService: ToastService
+  ) { }
+
+  ngOnInit() {
+    this.loadComplaints();
+  }
+
+  loadComplaints() {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.staffService.getMyComplaints().subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        if (response.success && response.data) {
+          this.complaints = response.data;
+          this.applyFilters();
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Error loading complaints', err);
+        this.errorMessage = 'Unable to load complaints. Please try again later.';
+      }
+    });
+  }
+
+  applyFilters() {
+    this.filteredComplaints = this.complaints.filter(complaint => {
+      const matchesStatus = !this.filters.status || complaint.status === this.filters.status;
+      const matchesPriority = !this.filters.priority || complaint.priority === this.filters.priority;
+      const matchesSearch = !this.filters.search ||
+        complaint.title.toLowerCase().includes(this.filters.search.toLowerCase()) ||
+        complaint.complaintId.toLowerCase().includes(this.filters.search.toLowerCase());
+
+      return matchesStatus && matchesPriority && matchesSearch;
+    });
+  }
+  viewComplaint(complaint: Complaint) {
+    this.selectedComplaint = complaint;
+    this.actionForm = { action: '', notes: '' };
+    this.updateStatusForm = { status: complaint.status, notes: '' };
+    this.resolveForm = { resolutionNotes: '' };
+  }
+
+  closeModal() {
+    this.selectedComplaint = null;
+  }
+
+  addAction() {
+    if (!this.selectedComplaint || !this.actionForm.action) return;
+
+    this.isSubmitting = true;
+    this.staffService.addAction(
+      this.selectedComplaint.complaintId,
+      this.actionForm.action,
+      this.actionForm.notes
+    ).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        if (response.success && response.data) {
+          this.selectedComplaint = response.data;
+          this.loadComplaints();
+          this.actionForm = { action: '', notes: '' };
+          this.toastService.success('Action logged successfully!');
+        }
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Error adding action', err);
+        this.toastService.error('Failed to log action. Please try again.');
+      }
+    });
+  }
+
+  updateStatus() {
+    if (!this.selectedComplaint || !this.updateStatusForm.status) return;
+
+    this.isSubmitting = true;
+    this.staffService.updateStatus(
+      this.selectedComplaint.complaintId,
+      this.updateStatusForm.status,
+      this.updateStatusForm.notes
+    ).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        if (response.success && response.data) {
+          this.selectedComplaint = response.data;
+          this.loadComplaints();
+          this.updateStatusForm.notes = '';
+          this.toastService.success('Status updated successfully!');
+        }
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Error updating status', err);
+        this.toastService.error('Failed to update status. Please try again.');
+      }
+    });
+  }
+
+  resolveComplaint() {
+    if (!this.selectedComplaint || !this.resolveForm.resolutionNotes) return;
+
+    this.isSubmitting = true;
+    this.staffService.resolveComplaint(
+      this.selectedComplaint.complaintId,
+      this.resolveForm.resolutionNotes
+    ).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        if (response.success && response.data) {
+          this.selectedComplaint = response.data;
+          this.loadComplaints();
+          this.resolveForm.resolutionNotes = '';
+          this.toastService.success('Complaint resolved successfully!');
+          this.closeModal();
+        }
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Error resolving complaint', err);
+        this.toastService.error('Failed to resolve complaint. Please try again.');
+      }
+    });
+  }
 
   getCountByStatus(status: string): number {
     return this.complaints.filter(c => c.status === status).length;
   }
 
-  getPriorityClass(priority: string): string {
-    const classes = {
-      'LOW': 'bg-info/10 text-info',
-      'MEDIUM': 'bg-warning/10 text-warning',
-      'HIGH': 'bg-destructive/10 text-destructive',
-      'URGENT': 'bg-destructive/20 text-destructive font-bold'
+  getStatusClass(status: string): string {
+    const classes: Record<string, string> = {
+      'OPEN': 'bg-warning/10 text-warning border-warning',
+      'IN_PROGRESS': 'bg-info/10 text-info border-info',
+      'RESOLVED': 'bg-success/10 text-success border-success',
+      'CLOSED': 'bg-muted text-muted-foreground border-border'
     };
-    return `text-xs font-medium px-2 py-1 rounded ${classes[priority as keyof typeof classes] || 'bg-muted text-muted-foreground'}`;
+    return classes[status] || classes['OPEN'];
+  }
+
+  getPriorityClass(priority: string): string {
+    const classes: Record<string, string> = {
+      'LOW': 'bg-success/10 text-success border-success',
+      'MEDIUM': 'bg-warning/10 text-warning border-warning',
+      'HIGH': 'bg-destructive/10 text-destructive border-destructive',
+      'URGENT': 'bg-destructive text-destructive-foreground border-destructive'
+    };
+    return classes[priority] || classes['MEDIUM'];
   }
 }

@@ -22,7 +22,7 @@ import { User } from '../../../models/user.model';
       <!-- Header -->
       <app-header 
         (menuToggle)="toggleSidebar()" 
-        [userName]="currentUser?.name || 'User'"
+        [userName]="currentUser?.fullName || 'User'"
         [userRole]="currentUser?.role || 'CUSTOMER'"
       ></app-header>
 

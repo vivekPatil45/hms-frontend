@@ -7,6 +7,8 @@ import { CustomerHomeComponent } from './features/customer/home/customer-home.co
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
+import { UserRole } from './models/user.model';
+
 export const routes: Routes = [
     {
         path: '',
@@ -19,13 +21,17 @@ export const routes: Routes = [
         children: [
             { path: 'login', component: LoginComponent },
             { path: 'register', component: RegisterComponent },
+            {
+                path: 'change-password',
+                loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
+            },
             { path: '', redirectTo: 'login', pathMatch: 'full' }
         ]
     },
     {
         path: 'customer',
         component: DashboardLayoutComponent,
-        canActivate: [authGuard, roleGuard(['CUSTOMER'])],
+        canActivate: [authGuard, roleGuard([UserRole.CUSTOMER])],
         children: [
             { path: 'home', component: CustomerHomeComponent },
             {
@@ -43,13 +49,17 @@ export const routes: Routes = [
             {
                 path: 'profile',
                 loadComponent: () => import('./features/customer/profile/customer-profile.component').then(m => m.CustomerProfileComponent)
+            },
+            {
+                path: 'contact',
+                loadComponent: () => import('./features/customer/contact-us/contact-us.component').then(m => m.ContactUsComponent)
             }
         ]
     },
     {
         path: 'admin',
         component: DashboardLayoutComponent,
-        canActivate: [authGuard, roleGuard(['ADMIN'])],
+        canActivate: [authGuard, roleGuard([UserRole.ADMIN])],
         children: [
             {
                 path: 'dashboard',
@@ -74,13 +84,17 @@ export const routes: Routes = [
             {
                 path: 'complaints',
                 loadComponent: () => import('./features/admin/complaints/admin-complaints.component').then(m => m.AdminComplaintsComponent)
+            },
+            {
+                path: 'users',
+                loadComponent: () => import('./features/admin/users/admin-users.component').then(m => m.AdminUsersComponent)
             }
         ]
     },
     {
         path: 'staff',
         component: DashboardLayoutComponent,
-        canActivate: [authGuard, roleGuard(['STAFF'])],
+        canActivate: [authGuard, roleGuard([UserRole.STAFF])],
         children: [
             {
                 path: 'complaints',

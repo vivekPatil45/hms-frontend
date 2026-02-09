@@ -1,10 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <header class="fixed top-0 left-0 right-0 z-40 bg-card border-b border-border h-16">
       <div class="flex items-center justify-between h-full px-4">
@@ -111,13 +113,18 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   @Output() menuToggle = new EventEmitter<void>();
-  isSidebarOpen = false; // Keep this for the template's @if condition
+  isSidebarOpen = false; // local state for icon toggle logic
   isUserMenuOpen = false;
   @Input() userName: string = 'User';
   @Input() userRole: string = 'CUSTOMER';
 
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) { }
+
   toggleSidebar() {
-    this.isSidebarOpen = !this.isSidebarOpen; // Toggle local state for icon change
+    this.isSidebarOpen = !this.isSidebarOpen;
     this.menuToggle.emit();
   }
 
@@ -126,7 +133,17 @@ export class HeaderComponent {
   }
 
   handleLogout() {
-    // Call auth service logout
     this.isUserMenuOpen = false;
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/auth/login']);
+      },
+      error: (err) => {
+        console.error('Logout failed', err);
+        // Even if API call fails, we should clear local session and redirect
+        // AuthService.logout() handles clearSession in its catchError/finalize
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 }

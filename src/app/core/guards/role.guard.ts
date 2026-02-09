@@ -19,15 +19,14 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
             return true;
         }
 
-        // Redirect to appropriate dashboard based on role
         switch (currentUser.role) {
-            case 'CUSTOMER':
+            case UserRole.CUSTOMER:
                 router.navigate(['/customer/home']);
                 break;
-            case 'ADMIN':
+            case UserRole.ADMIN:
                 router.navigate(['/admin/dashboard']);
                 break;
-            case 'STAFF':
+            case UserRole.STAFF:
                 router.navigate(['/staff/complaints']);
                 break;
             default:

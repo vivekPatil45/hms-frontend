@@ -7,16 +7,16 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-    selector: 'app-login',
-    standalone: true,
-    imports: [
-        CommonModule,
-        RouterModule,
-        ReactiveFormsModule,
-        ButtonComponent,
-        LoadingSpinnerComponent
-    ],
-    template: `
+  selector: 'app-login',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    ButtonComponent,
+    LoadingSpinnerComponent
+  ],
+  template: `
     <div class="animate-fade-in">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -28,9 +28,9 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="mb-6 p-4 bg-muted/50 rounded-lg text-sm border border-border">
         <p class="font-semibold text-foreground mb-2">Demo Credentials:</p>
         <div class="space-y-1 text-muted-foreground">
-          <p>Customer: customer&#64;hotel.com / password123</p>
-          <p>Admin: admin&#64;hotel.com / admin123</p>
-          <p>Staff: staff&#64;hotel.com / staff123</p>
+          <p>Customer: customer / password123</p>
+          <p>Admin: admin / admin123</p>
+          <p>Staff: staff / staff123</p>
         </div>
       </div>
 
@@ -46,23 +46,20 @@ import { AuthService } from '../../../core/services/auth.service';
 
       <!-- Login Form -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
-        <!-- Email -->
+        <!-- Username -->
         <div class="space-y-2">
-          <label for="email" class="text-sm font-medium text-foreground block">
-            Email <span class="text-destructive">*</span>
+          <label for="username" class="text-sm font-medium text-foreground block">
+            Username <span class="text-destructive">*</span>
           </label>
           <input
-            id="email"
-            type="email"
-            formControlName="email"
+            id="username"
+            type="text"
+            formControlName="username"
             class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-            placeholder="Enter your email"
+            placeholder="Enter your username"
           />
-          @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['required']) {
-            <p class="text-sm text-destructive">Email is required</p>
-          }
-          @if (loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['email']) {
-            <p class="text-sm text-destructive">Please enter a valid email</p>
+          @if (loginForm.get('username')?.touched && loginForm.get('username')?.errors?.['required']) {
+            <p class="text-sm text-destructive">Username is required</p>
           }
         </div>
 
@@ -123,57 +120,68 @@ import { AuthService } from '../../../core/services/auth.service';
       </p>
     </div>
   `,
-    styles: []
+  styles: []
 })
 export class LoginComponent {
-    loginForm: FormGroup;
-    isLoading = false;
-    error = '';
+  loginForm: FormGroup;
+  isLoading = false;
+  error = '';
 
-    constructor(
-        private fb: FormBuilder,
-        private authService: AuthService,
-        private router: Router
-    ) {
-        this.loginForm = this.fb.group({
-            email: ['', [Validators.required, Validators.email]],
-            password: ['', [Validators.required]],
-            rememberMe: [false]
-        });
-    }
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.loginForm = this.fb.group({
+      username: ['', [Validators.required]],
+      password: ['', [Validators.required]],
+      rememberMe: [false]
+    });
+  }
 
-    onSubmit() {
-        if (this.loginForm.valid) {
-            this.isLoading = true;
-            this.error = '';
+  onSubmit() {
+    if (this.loginForm.valid) {
+      this.isLoading = true;
+      this.error = '';
 
-            const { email, password } = this.loginForm.value;
+      const { username, password } = this.loginForm.value;
 
-            this.authService.login({ email, password }).subscribe({
-                next: (user) => {
-                    this.isLoading = false;
-                    // Navigate based on role
-                    switch (user.role) {
-                        case 'CUSTOMER':
-                            this.router.navigate(['/customer/home']);
-                            break;
-                        case 'ADMIN':
-                            this.router.navigate(['/admin/dashboard']);
-                            break;
-                        case 'STAFF':
-                            this.router.navigate(['/staff/complaints']);
-                            break;
-                        default:
-                            this.router.navigate(['/']);
-                    }
-                },
-                error: (err) => {
-                    this.isLoading = false;
-                    this.error = err.message || 'Login failed. Please try again.';
-                }
-            });
-        } else {
-            this.loginForm.markAllAsTouched();
+      this.authService.login({ username, password }).subscribe({
+        next: (user) => {
+          this.isLoading = false;
+          // Navigate based on role
+          if (user.requirePasswordChange) {
+            this.router.navigate(['/auth/change-password']);
+          } else {
+            switch (user.role) {
+              case 'CUSTOMER':
+                this.router.navigate(['/customer/home']);
+                break;
+              case 'ADMIN':
+                this.router.navigate(['/admin/dashboard']);
+                break;
+              case 'STAFF':
+                this.router.navigate(['/staff/complaints']);
+                break;
+              default:
+                this.router.navigate(['/']);
+            }
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          // Check for specific error message from backend
+          if (err.error && err.error.message) {
+            this.error = err.error.message;
+          } else {
+            // Fallback to generic message
+            this.error = 'Login failed. Please verify your credentials.';
+          }
+          console.error('Login error details:', err);
         }
+      });
+    } else {
+      this.loginForm.markAllAsTouched();
     }
+  }
 }

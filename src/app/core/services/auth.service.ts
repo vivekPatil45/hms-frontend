@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { User, LoginCredentials, RegisterData } from '../../models/user.model';
-import { STORAGE_KEYS } from '../../shared/utils/constants';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
+import { User, LoginCredentials, RegisterData, ApiResponse, RegisterResponseData, AuthResponseData } from '../../models/user.model';
+import { STORAGE_KEYS, API_BASE_URL } from '../../shared/utils/constants';
 
 @Injectable({
     providedIn: 'root'
@@ -9,8 +11,9 @@ import { STORAGE_KEYS } from '../../shared/utils/constants';
 export class AuthService {
     private currentUserSubject: BehaviorSubject<User | null>;
     public currentUser$: Observable<User | null>;
+    private apiUrl = `${API_BASE_URL}`;
 
-    constructor() {
+    constructor(private http: HttpClient) {
         const storedUser = this.getStoredUser();
         this.currentUserSubject = new BehaviorSubject<User | null>(storedUser);
         this.currentUser$ = this.currentUserSubject.asObservable();
@@ -31,81 +34,72 @@ export class AuthService {
     }
 
     /**
-     * Login user
+     * Register new user
      */
-    public login(credentials: LoginCredentials): Observable<User> {
-        // TODO: Replace with actual API call
-        return new Observable(observer => {
-            // Mock login with demo credentials
-            setTimeout(() => {
-                // Determine role based on email
-                let role: 'CUSTOMER' | 'ADMIN' | 'STAFF' = 'CUSTOMER';
-                let name = 'User';
-
-                if (credentials.email === 'customer@hotel.com' && credentials.password === 'password123') {
-                    role = 'CUSTOMER';
-                    name = 'John Customer';
-                } else if (credentials.email === 'admin@hotel.com' && credentials.password === 'admin123') {
-                    role = 'ADMIN';
-                    name = 'Admin User';
-                } else if (credentials.email === 'staff@hotel.com' && credentials.password === 'staff123') {
-                    role = 'STAFF';
-                    name = 'Staff Member';
-                } else {
-                    observer.error({ message: 'Invalid credentials. Please use demo credentials.' });
-                    return;
-                }
-
-                const mockUser: User = {
-                    id: Date.now(),
-                    name: name,
-                    email: credentials.email,
-                    role: role,
-                    phone: '+1 (555) 123-4567',
-                    createdAt: new Date().toISOString()
-                };
-
-                const mockToken = 'mock-jwt-token-' + Date.now();
-
-                this.setSession(mockUser, mockToken);
-                observer.next(mockUser);
-                observer.complete();
-            }, 1000);
-        });
+    public register(data: RegisterData): Observable<ApiResponse<RegisterResponseData>> {
+        return this.http.post<ApiResponse<RegisterResponseData>>(`${this.apiUrl}/auth/register`, data)
+            .pipe(
+                tap(response => {
+                    if (response.success) {
+                        console.log('Registration successful:', response.data);
+                    }
+                }),
+                catchError(error => {
+                    console.error('Registration error:', error);
+                    return throwError(() => error);
+                })
+            );
     }
 
     /**
-     * Register new user
+     * Login user
      */
-    public register(data: RegisterData): Observable<User> {
-        // TODO: Replace with actual API call
-        return new Observable(observer => {
-            setTimeout(() => {
-                const mockUser: User = {
-                    id: Date.now(),
-                    name: data.name,
-                    email: data.email,
-                    role: 'CUSTOMER',
-                    phone: data.phone || '',
-                    createdAt: new Date().toISOString()
-                };
+    public login(credentials: LoginCredentials): Observable<User> {
+        return this.http.post<ApiResponse<AuthResponseData>>(`${this.apiUrl}/auth/login`, credentials)
+            .pipe(
+                map(response => {
+                    if (response.success && response.data) {
+                        const { token, user } = response.data;
 
-                const mockToken = 'mock-jwt-token-' + Date.now();
+                        // Create User object
+                        const currentUser: User = {
+                            userId: user.userId,
+                            username: user.username,
+                            fullName: user.fullName,
+                            email: '', // Email not returned in login response
+                            mobileNumber: '', // Phone not returned in login response
+                            role: user.role,
+                            requirePasswordChange: user.requirePasswordChange
+                        };
 
-                this.setSession(mockUser, mockToken);
-                observer.next(mockUser);
-                observer.complete();
-            }, 1000);
-        });
+                        this.setSession(currentUser, token);
+                        return currentUser;
+                    }
+                    throw new Error('Login failed');
+                }),
+                catchError(error => {
+                    console.error('Login error:', error);
+                    return throwError(() => error);
+                })
+            );
     }
 
     /**
      * Logout user
      */
-    public logout(): void {
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        this.currentUserSubject.next(null);
+    public logout(): Observable<void> {
+        return this.http.post<ApiResponse<void>>(`${this.apiUrl}/auth/logout`, {})
+            .pipe(
+                tap(() => {
+                    this.clearSession();
+                }),
+                map(() => void 0),
+                catchError(error => {
+                    // Clear session even if API call fails
+                    this.clearSession();
+                    return throwError(() => error);
+                })
+            );
     }
 
     /**
@@ -125,6 +119,15 @@ export class AuthService {
     }
 
     /**
+     * Clear user session
+     */
+    private clearSession(): void {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        this.currentUserSubject.next(null);
+    }
+
+    /**
      * Get stored user from localStorage
      */
     private getStoredUser(): User | null {
@@ -140,20 +143,31 @@ export class AuthService {
     }
 
     /**
-     * Update user profile
+     * Update user profile in session
+     */
+    public updateSession(user: Partial<User>): void {
+        const currentUser = this.getCurrentUser();
+        if (currentUser) {
+            const updatedUser = { ...currentUser, ...user };
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
+            this.currentUserSubject.next(updatedUser);
+        }
+    }
+
+    /**
+     * Mock update profile (kept for compatibility)
      */
     public updateProfile(user: Partial<User>): Observable<User> {
         return new Observable(observer => {
-            setTimeout(() => {
-                const currentUser = this.getCurrentUser();
-                if (currentUser) {
-                    const updatedUser = { ...currentUser, ...user };
-                    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-                    this.currentUserSubject.next(updatedUser);
-                    observer.next(updatedUser);
-                }
-                observer.complete();
-            }, 500);
+            this.updateSession(user);
+            observer.next(this.getCurrentUser()!);
+            observer.complete();
         });
+    }
+    /**
+     * Change password
+     */
+    public changePassword(data: any): Observable<ApiResponse<void>> {
+        return this.http.post<ApiResponse<void>>(`${this.apiUrl}/users/change-password`, data);
     }
 }

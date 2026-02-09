@@ -5,14 +5,14 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { Reservation } from '../../../models/reservation.model';
 
 @Component({
-    selector: 'app-customer-history',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ButtonComponent,
-        StatusBadgeComponent
-    ],
-    template: `
+  selector: 'app-customer-history',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ButtonComponent,
+    StatusBadgeComponent
+  ],
+  template: `
     <div class="space-y-6 animate-fade-in">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Booking History</h1>
@@ -39,8 +39,8 @@ import { Reservation } from '../../../models/reservation.model';
               @for (booking of bookings; track booking.id) {
                 <tr class="hover:bg-muted/50 transition-colors">
                   <td class="py-3 px-4">
-                    <div class="font-medium text-foreground">{{ booking.room?.type }}</div>
-                    <div class="text-xs text-muted-foreground">Room {{ booking.room?.number }}</div>
+                    <div class="font-medium text-foreground">{{ booking.room?.roomType }}</div>
+                    <div class="text-xs text-muted-foreground">Room {{ booking.room?.roomNumber }}</div>
                   </td>
                   <td class="py-3 px-4 text-sm text-foreground">
                     {{ booking.checkInDate | date:'mediumDate' }}
@@ -81,72 +81,87 @@ import { Reservation } from '../../../models/reservation.model';
       </div>
     </div>
   `,
-    styles: []
+  styles: []
 })
 export class CustomerHistoryComponent {
-    bookings: Reservation[] = [
-        {
-            id: 1,
-            customerId: 1,
-            roomId: 1,
-            room: {
-                id: 1,
-                number: '101',
-                type: 'DELUXE',
-                floor: 1,
-                pricePerNight: 250,
-                status: 'AVAILABLE',
-                description: 'Deluxe Room',
-                amenities: [],
-                capacity: 2
-            },
-            checkInDate: '2024-03-15',
-            checkOutDate: '2024-03-18',
-            numberOfGuests: 2,
-            totalAmount: 750,
-            status: 'CONFIRMED'
-        },
-        {
-            id: 2,
-            customerId: 1,
-            roomId: 2,
-            room: {
-                id: 2,
-                number: '205',
-                type: 'SUITE',
-                floor: 2,
-                pricePerNight: 450,
-                status: 'OCCUPIED',
-                description: 'Suite Room',
-                amenities: [],
-                capacity: 3
-            },
-            checkInDate: '2024-04-20',
-            checkOutDate: '2024-04-22',
-            numberOfGuests: 3,
-            totalAmount: 900,
-            status: 'PENDING'
-        },
-        {
-            id: 3,
-            customerId: 1,
-            roomId: 4,
-            room: {
-                id: 4,
-                number: '102',
-                type: 'STANDARD',
-                floor: 1,
-                pricePerNight: 150,
-                status: 'MAINTENANCE',
-                description: 'Standard Room',
-                amenities: [],
-                capacity: 2
-            },
-            checkInDate: '2023-12-10',
-            checkOutDate: '2023-12-12',
-            numberOfGuests: 1,
-            totalAmount: 300,
-            status: 'COMPLETED'
-        }
-    ];
+  bookings: Reservation[] = [
+    {
+      id: 1,
+      customerId: 1,
+      roomId: 1,
+      room: {
+        roomId: '1',
+        roomNumber: '101',
+        roomType: 'DELUXE',
+        bedType: 'DOUBLE',
+        floor: 1,
+        pricePerNight: 250,
+        currentStatus: 'AVAILABLE',
+        description: 'Deluxe Room',
+        amenities: [],
+        maxOccupancy: 2,
+        availability: true,
+        roomSize: 300,
+        viewType: 'CITY',
+        images: []
+      },
+      checkInDate: '2024-03-15',
+      checkOutDate: '2024-03-18',
+      numberOfGuests: 2,
+      totalAmount: 750,
+      status: 'CONFIRMED'
+    },
+    {
+      id: 2,
+      customerId: 1,
+      roomId: 2,
+      room: {
+        roomId: '2',
+        roomNumber: '205',
+        roomType: 'SUITE',
+        bedType: 'KING',
+        floor: 2,
+        pricePerNight: 450,
+        currentStatus: 'OCCUPIED',
+        description: 'Suite Room',
+        amenities: [],
+        maxOccupancy: 3,
+        availability: true,
+        roomSize: 500,
+        viewType: 'CITY',
+        images: []
+      },
+      checkInDate: '2024-04-20',
+      checkOutDate: '2024-04-22',
+      numberOfGuests: 3,
+      totalAmount: 900,
+      status: 'PENDING'
+    },
+    {
+      id: 3,
+      customerId: 1,
+      roomId: 4,
+      room: {
+        roomId: '4',
+        roomNumber: '102',
+        roomType: 'STANDARD',
+        bedType: 'DOUBLE',
+        floor: 1,
+        pricePerNight: 150,
+        currentStatus: 'MAINTENANCE',
+        description: 'Standard Room',
+        amenities: [],
+        maxOccupancy: 2,
+        availability: false,
+        roomSize: 200,
+        viewType: 'GARDEN',
+        images: []
+      },
+      checkInDate: '2023-12-10',
+      checkOutDate: '2023-12-12',
+      numberOfGuests: 1,
+      totalAmount: 300,
+      status: 'COMPLETED'
+    }
+  ];
 }

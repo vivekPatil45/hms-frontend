@@ -4,24 +4,25 @@ import { RouterModule } from '@angular/router';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-    selector: 'app-customer-home',
-    standalone: true,
-    imports: [
-        CommonModule,
-        RouterModule,
-        ButtonComponent,
-        LoadingSpinnerComponent,
-        StatusBadgeComponent
-    ],
-    template: `
+  selector: 'app-customer-home',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ButtonComponent,
+    LoadingSpinnerComponent,
+    StatusBadgeComponent
+  ],
+  template: `
     <div class="space-y-8 animate-fade-in">
       <!-- Welcome Section -->
       <section class="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 text-primary-foreground">
         <div class="max-w-2xl">
           <h1 class="text-3xl md:text-4xl font-bold mb-4">
-            Welcome back, Guest! 👋
+            Welcome back, {{ (currentUser$ | async)?.fullName || 'Guest' }}! 👋
           </h1>
           <p class="text-primary-foreground/80 text-lg mb-6">
             Ready to book your next luxury stay? Explore our premium rooms and exclusive amenities.
@@ -150,6 +151,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
           Why Choose GrandHotel?
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Features -->
           <div class="text-center">
             <div class="h-12 w-12 bg-secondary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg class="h-6 w-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +163,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
               Stay connected with complimentary high-speed internet throughout the property.
             </p>
           </div>
-          <div class="text-center">
+            <div class="text-center">
             <div class="h-12 w-12 bg-secondary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg class="h-6 w-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -187,7 +189,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
       </section>
     </div>
   `,
-    styles: [`
+  styles: [`
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -197,34 +199,38 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
   `]
 })
 export class CustomerHomeComponent {
-    isLoading = false;
-    featuredRooms = [
-        {
-            id: 1,
-            number: '101',
-            type: 'DELUXE',
-            floor: 1,
-            pricePerNight: 250,
-            status: 'AVAILABLE' as const,
-            description: 'Spacious deluxe room with king-size bed, modern amenities, and stunning city views.'
-        },
-        {
-            id: 2,
-            number: '205',
-            type: 'SUITE',
-            floor: 2,
-            pricePerNight: 450,
-            status: 'AVAILABLE' as const,
-            description: 'Luxurious suite featuring separate living area, premium furnishings, and panoramic views.'
-        },
-        {
-            id: 3,
-            number: '301',
-            type: 'PRESIDENTIAL',
-            floor: 3,
-            pricePerNight: 850,
-            status: 'AVAILABLE' as const,
-            description: 'Our finest accommodation with exclusive amenities, private terrace, and personalized service.'
-        }
-    ];
+  isLoading = false;
+  currentUser$ = this.authService.currentUser$;
+
+  constructor(private authService: AuthService) { }
+
+  featuredRooms = [
+    {
+      id: 1,
+      number: '101',
+      type: 'DELUXE',
+      floor: 1,
+      pricePerNight: 250,
+      status: 'AVAILABLE' as const,
+      description: 'Spacious deluxe room with king-size bed, modern amenities, and stunning city views.'
+    },
+    {
+      id: 2,
+      number: '205',
+      type: 'SUITE',
+      floor: 2,
+      pricePerNight: 450,
+      status: 'AVAILABLE' as const,
+      description: 'Luxurious suite featuring separate living area, premium furnishings, and panoramic views.'
+    },
+    {
+      id: 3,
+      number: '301',
+      type: 'PRESIDENTIAL',
+      floor: 3,
+      pricePerNight: 850,
+      status: 'AVAILABLE' as const,
+      description: 'Our finest accommodation with exclusive amenities, private terrace, and personalized service.'
+    }
+  ];
 }

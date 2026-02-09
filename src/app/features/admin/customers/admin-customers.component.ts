@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { User } from '../../../models/user.model';
+import { User, UserRole } from '../../../models/user.model';
 
 @Component({
-    selector: 'app-admin-customers',
-    standalone: true,
-    imports: [CommonModule, ButtonComponent],
-    template: `
+  selector: 'app-admin-customers',
+  standalone: true,
+  imports: [CommonModule, ButtonComponent],
+  template: `
     <div class="space-y-6 animate-fade-in">
       <div class="flex justify-between items-center">
         <div>
@@ -31,15 +31,15 @@ import { User } from '../../../models/user.model';
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @for (customer of customers; track customer.id) {
+        @for (customer of customers; track customer.userId) {
           <div class="bg-card rounded-xl border border-border p-6 card-hover">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center gap-3">
                 <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  {{ getInitials(customer.name) }}
+                  {{ getInitials(customer.fullName) }}
                 </div>
                 <div>
-                  <h3 class="font-semibold text-foreground">{{ customer.name }}</h3>
+                  <h3 class="font-semibold text-foreground">{{ customer.fullName }}</h3>
                   <p class="text-sm text-muted-foreground">{{ customer.email }}</p>
                 </div>
               </div>
@@ -50,7 +50,7 @@ import { User } from '../../../models/user.model';
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                {{ customer.phone }}
+                {{ customer.mobileNumber }}
               </div>
               <div class="flex items-center gap-2 text-muted-foreground">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,42 +75,45 @@ import { User } from '../../../models/user.model';
       </div>
     </div>
   `,
-    styles: []
+  styles: []
 })
 export class AdminCustomersComponent {
-    customers: User[] = [
-        {
-            id: 1,
-            name: 'Alice Johnson',
-            email: 'alice@example.com',
-            phone: '+1 (555) 123-4567',
-            role: 'CUSTOMER',
-            createdAt: '2024-01-15T10:00:00Z'
-        },
-        {
-            id: 2,
-            name: 'Bob Smith',
-            email: 'bob@example.com',
-            phone: '+1 (555) 234-5678',
-            role: 'CUSTOMER',
-            createdAt: '2024-02-20T14:30:00Z'
-        },
-        {
-            id: 3,
-            name: 'Charlie Brown',
-            email: 'charlie@example.com',
-            phone: '+1 (555) 345-6789',
-            role: 'CUSTOMER',
-            createdAt: '2024-03-10T09:15:00Z'
-        }
-    ];
-
-    getInitials(name: string): string {
-        return name
-            .split(' ')
-            .map(n => n[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase();
+  customers: User[] = [
+    {
+      userId: '1',
+      username: 'alice',
+      fullName: 'Alice Johnson',
+      email: 'alice@example.com',
+      mobileNumber: '+1 (555) 123-4567',
+      role: UserRole.CUSTOMER,
+      createdAt: '2024-01-15T10:00:00Z'
+    },
+    {
+      userId: '2',
+      username: 'bob',
+      fullName: 'Bob Smith',
+      email: 'bob@example.com',
+      mobileNumber: '+1 (555) 234-5678',
+      role: UserRole.CUSTOMER,
+      createdAt: '2024-02-20T14:30:00Z'
+    },
+    {
+      userId: '3',
+      username: 'charlie',
+      fullName: 'Charlie Brown',
+      email: 'charlie@example.com',
+      mobileNumber: '+1 (555) 345-6789',
+      role: UserRole.CUSTOMER,
+      createdAt: '2024-03-10T09:15:00Z'
     }
+  ];
+
+  getInitials(name: string): string {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }
 }

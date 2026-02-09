@@ -6,20 +6,38 @@ export type ComplaintPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 // Complaint interface
 export interface Complaint {
-    id: number;
-    customerId: number;
-    customer?: User;
+    id?: number;
+    complaintId: string;
+    customerId?: number; // Deprecated - use customer.customerId instead
+    customer?: {
+        customerId: string;
+        user: {
+            userId: number;
+            fullName: string;
+            email: string;
+            phoneNumber?: string;
+        };
+    };
+    bookingId?: string;
+    category: string;
     title: string;
     description: string;
-    category: string;
     priority: ComplaintPriority;
     status: ComplaintStatus;
-    assignedToId?: number;
-    assignedTo?: User;
-    resolution?: string;
+    contactPreference?: string;
+    expectedResolutionDate?: string;
+    resolutionNotes?: string;
+    actionLog?: ActionLog[];
     createdAt?: string;
     updatedAt?: string;
     resolvedAt?: string;
+}
+
+export interface ActionLog {
+    actionId?: string;
+    performedBy: string;
+    action: string;
+    timestamp: string;
 }
 
 // Create complaint data

@@ -1,5 +1,7 @@
+import { environment } from '../../../environments/environment';
+
 // API base URL
-export const API_BASE_URL = 'http://localhost:8080/api';
+export const API_BASE_URL = environment.apiUrl;
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -60,14 +62,18 @@ export const ROOM_AMENITIES = [
     'Coffee Maker',
 ] as const;
 
-// Complaint categories
+// Complaint categories matches backend ComplaintCategory enum
 export const COMPLAINT_CATEGORIES = [
-    'Room Cleanliness',
-    'Maintenance',
-    'Noise',
-    'Staff Behavior',
-    'Amenities',
-    'Billing',
-    'Food Service',
-    'Other',
+    'ROOM_ISSUE',
+    'SERVICE_ISSUE',
+    'BILLING_ISSUE',
+    'STAFF_BEHAVIOR',
+    'CLEANLINESS',
+    'AMENITIES',
+    'OTHER'
+] as const;
+
+export const CONTACT_PREFERENCES = [
+    'EMAIL',
+    'CALL'
 ] as const;
