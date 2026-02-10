@@ -53,6 +53,18 @@ export const routes: Routes = [
             {
                 path: 'contact',
                 loadComponent: () => import('./features/customer/contact-us/contact-us.component').then(m => m.ContactUsComponent)
+            },
+            {
+                path: 'book/:roomId',
+                loadComponent: () => import('./features/customer/booking-confirmation/booking-confirmation.component').then(m => m.BookingConfirmationComponent)
+            },
+            {
+                path: 'payment/:reservationId',
+                loadComponent: () => import('./features/customer/payment/payment.component').then(m => m.PaymentComponent)
+            },
+            {
+                path: 'booking-success/:reservationId',
+                loadComponent: () => import('./features/customer/booking-success/booking-success.component').then(m => m.BookingSuccessComponent)
             }
         ]
     },

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -12,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ButtonComponent,
     LoadingSpinnerComponent,
     StatusBadgeComponent
@@ -20,32 +22,113 @@ import { AuthService } from '../../../core/services/auth.service';
     <div class="space-y-8 animate-fade-in">
       <!-- Welcome Section -->
       <section class="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 text-primary-foreground">
-        <div class="max-w-2xl">
+        <div class="max-w-4xl mx-auto text-center mb-8">
           <h1 class="text-3xl md:text-4xl font-bold mb-4">
             Welcome back, {{ (currentUser$ | async)?.fullName || 'Guest' }}! 👋
           </h1>
-          <p class="text-primary-foreground/80 text-lg mb-6">
-            Ready to book your next luxury stay? Explore our premium rooms and exclusive amenities.
+          <p class="text-primary-foreground/80 text-lg">
+            Find your perfect stay with us
           </p>
-          <div class="flex flex-wrap gap-4">
-            <a routerLink="/customer/rooms">
-              <app-button variant="secondary" size="lg" className="gap-2">
-                Browse Rooms
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </app-button>
-            </a>
-            <a routerLink="/customer/history">
-              <app-button 
-                variant="ghost" 
-                size="lg" 
-                className="border border-primary-foreground/20 hover:bg-primary-foreground/10"
-              >
-                View My Bookings
-              </app-button>
-            </a>
-          </div>
+        </div>
+
+        <!-- Search Form -->
+        <div class="bg-card text-card-foreground rounded-xl p-6 shadow-lg max-w-5xl mx-auto">
+          <form (ngSubmit)="onSearch()" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <!-- Check-in Date -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Check-in</label>
+                <input 
+                  type="date" 
+                  [(ngModel)]="searchCriteria.checkInDate" 
+                  name="checkIn"
+                  [min]="minDate"
+                  (change)="validateDates()"
+                  class="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  required
+                >
+              </div>
+
+              <!-- Check-out Date -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Check-out</label>
+                <input 
+                  type="date" 
+                  [(ngModel)]="searchCriteria.checkOutDate" 
+                  name="checkOut"
+                  [min]="searchCriteria.checkInDate || minDate"
+                  (change)="validateDates()"
+                  class="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  required
+                >
+              </div>
+
+              <!-- Guests -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Guests</label>
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <input 
+                      type="number" 
+                      [(ngModel)]="searchCriteria.numberOfAdults" 
+                      name="adults"
+                      min="1" 
+                      max="10"
+                      class="w-full h-10 px-3 rounded-md border border-input bg-background"
+                      placeholder="Adults"
+                      required
+                    >
+                  </div>
+                  <div class="flex-1">
+                    <input 
+                      type="number" 
+                      [(ngModel)]="searchCriteria.numberOfChildren" 
+                      name="children"
+                      min="0" 
+                      max="5"
+                      class="w-full h-10 px-3 rounded-md border border-input bg-background"
+                      placeholder="Kids"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Room Type -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Room Type</label>
+                <select 
+                  [(ngModel)]="searchCriteria.roomType" 
+                  name="roomType"
+                  class="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  required
+                >
+                  <option value="" disabled selected>Select Type</option>
+                  <option value="STANDARD">Standard</option>
+                  <option value="DELUXE">Deluxe</option>
+                  <option value="SUITE">Suite</option>
+                  <option value="PRESIDENTIAL">Presidential</option>
+                </select>
+              </div>
+
+              <!-- Search Button -->
+              <div class="flex items-end">
+                <app-button 
+                  type="submit" 
+                  class="w-full"
+                  [disabled]="!isValidSearch()"
+                >
+                  Search Rooms
+                </app-button>
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            @if (errorMessage) {
+              <div class="text-destructive text-sm text-center font-medium bg-destructive/10 p-2 rounded">
+                {{ errorMessage }}
+              </div>
+            }
+          </form>
         </div>
       </section>
 
@@ -201,8 +284,61 @@ import { AuthService } from '../../../core/services/auth.service';
 export class CustomerHomeComponent {
   isLoading = false;
   currentUser$ = this.authService.currentUser$;
+  minDate = new Date().toISOString().split('T')[0];
+  errorMessage = '';
 
-  constructor(private authService: AuthService) { }
+  searchCriteria = {
+    checkInDate: '',
+    checkOutDate: '',
+    numberOfAdults: 1,
+    numberOfChildren: 0,
+    roomType: ''
+  };
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) { }
+
+  validateDates() {
+    this.errorMessage = '';
+    if (this.searchCriteria.checkInDate && this.searchCriteria.checkOutDate) {
+      if (this.searchCriteria.checkOutDate <= this.searchCriteria.checkInDate) {
+        this.errorMessage = 'Check-out date must be after check-in date';
+        return false;
+      }
+    }
+    return true;
+  }
+
+  isValidSearch(): boolean {
+    return !!(
+      this.searchCriteria.checkInDate &&
+      this.searchCriteria.checkOutDate &&
+      this.searchCriteria.roomType &&
+      this.searchCriteria.numberOfAdults >= 1 &&
+      this.searchCriteria.numberOfAdults <= 10 &&
+      this.searchCriteria.numberOfChildren >= 0 &&
+      this.searchCriteria.numberOfChildren <= 5 &&
+      this.validateDates()
+    );
+  }
+
+  onSearch() {
+    if (this.isValidSearch()) {
+      this.router.navigate(['/customer/rooms'], {
+        queryParams: {
+          checkIn: this.searchCriteria.checkInDate,
+          checkOut: this.searchCriteria.checkOutDate,
+          adults: this.searchCriteria.numberOfAdults,
+          children: this.searchCriteria.numberOfChildren,
+          type: this.searchCriteria.roomType
+        }
+      });
+    } else {
+      this.errorMessage = 'Please fill in all required fields correctly.';
+    }
+  }
 
   featuredRooms = [
     {

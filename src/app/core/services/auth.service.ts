@@ -66,8 +66,8 @@ export class AuthService {
                             userId: user.userId,
                             username: user.username,
                             fullName: user.fullName,
-                            email: '', // Email not returned in login response
-                            mobileNumber: '', // Phone not returned in login response
+                            email: user.email,
+                            mobileNumber: user.mobileNumber,
                             role: user.role,
                             requirePasswordChange: user.requirePasswordChange
                         };

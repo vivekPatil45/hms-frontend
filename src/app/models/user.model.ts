@@ -73,6 +73,8 @@ export interface AuthResponseData {
         userId: string;
         username: string;
         fullName: string;
+        email: string;
+        mobileNumber: string;
         role: UserRole;
         requirePasswordChange: boolean;
     };

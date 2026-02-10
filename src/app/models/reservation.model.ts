@@ -6,16 +6,23 @@ export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLET
 
 // Reservation interface
 export interface Reservation {
-    id: number;
-    customerId: number;
-    customer?: User;
-    roomId: number;
-    room?: Room;
+    reservationId: string;
+    customer?: any;
+    roomId?: string;
+    room?: any; // Room object
     checkInDate: string;
     checkOutDate: string;
-    numberOfGuests: number;
+    numberOfAdults: number;
+    numberOfChildren: number;
+    numberOfNights: number;
+    baseAmount: number;
+    taxAmount: number;
+    discountAmount?: number;
     totalAmount: number;
-    status: ReservationStatus;
+    status: string;
+    paymentStatus: string;
+    paymentMethod?: string;
+    transactionId?: string;
     specialRequests?: string;
     createdAt?: string;
     updatedAt?: string;

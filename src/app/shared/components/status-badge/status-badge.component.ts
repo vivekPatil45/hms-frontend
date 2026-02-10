@@ -4,7 +4,7 @@ import { cn } from '../../utils/cn.util';
 
 type BadgeStatus =
     | 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED'  // Room statuses
-    | 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'    // Reservation statuses
+    | 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'PENDING_PAYMENT'    // Reservation statuses
     | 'PAID' | 'UNPAID'                                       // Bill statuses
     | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';        // Complaint statuses
 
@@ -20,13 +20,13 @@ type BadgeStatus =
     styles: []
 })
 export class StatusBadgeComponent {
-    @Input() status!: BadgeStatus;
+    @Input() status!: BadgeStatus | string;
     @Input() className = '';
 
     getBadgeClasses(): string {
         const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border';
 
-        const statusClasses: Record<BadgeStatus, string> = {
+        const statusClasses: Record<string, string> = {
             // Room statuses
             'AVAILABLE': 'badge-confirmed',
             'OCCUPIED': 'badge-booked',
@@ -38,6 +38,7 @@ export class StatusBadgeComponent {
             'CONFIRMED': 'badge-confirmed',
             'CANCELLED': 'badge-cancelled',
             'COMPLETED': 'badge-closed',
+            'PENDING_PAYMENT': 'badge-pending',
 
             // Bill statuses
             'PAID': 'badge-paid',
