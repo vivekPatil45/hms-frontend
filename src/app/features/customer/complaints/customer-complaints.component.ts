@@ -95,7 +95,7 @@ import { AuthService } from '../../../core/services/auth.service';
           </svg>
           <h3 class="text-lg font-medium text-foreground">No complaints found</h3>
           <p class="text-muted-foreground mt-1">
-            You haven't reported any issues yet.
+            You have not registered any complaints.
           </p>
         </div>
       }
@@ -402,10 +402,12 @@ export class CustomerComplaintsComponent implements OnInit {
         // Show user-friendly error message
         if (err.status === 404 && err.error?.message?.includes('Customer profile not found')) {
           this.errorMessage = 'Your customer profile is not set up yet. Please contact support or try logging out and back in.';
+        } else if (err.status === 404) {
+          this.errorMessage = 'The complaint you are looking for does not exist or has been deleted.';
         } else if (err.status === 401 || err.status === 403) {
           this.errorMessage = 'You are not authorized to view complaints. Please log in again.';
         } else {
-          this.errorMessage = 'Unable to load complaints. Please try again later.';
+          this.errorMessage = 'Unable to fetch complaint status. Please try again later.';
         }
       }
     });

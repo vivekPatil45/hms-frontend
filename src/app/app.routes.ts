@@ -65,6 +65,10 @@ export const routes: Routes = [
             {
                 path: 'booking-success/:reservationId',
                 loadComponent: () => import('./features/customer/booking-success/booking-success.component').then(m => m.BookingSuccessComponent)
+            },
+            {
+                path: 'modify-booking/:reservationId',
+                loadComponent: () => import('./features/customer/history/modify-booking.component').then(m => m.ModifyBookingComponent)
             }
         ]
     },

@@ -41,8 +41,20 @@ export class BookingService {
         return this.http.post<ApiResponse<any>>(`${this.apiUrl}/${reservationId}/payment`, payment);
     }
 
+    checkModification(reservationId: string, request: any): Observable<ApiResponse<any>> {
+        return this.http.post<ApiResponse<any>>(`${this.apiUrl}/${reservationId}/check-modification`, request);
+    }
+
+    modifyReservation(reservationId: string, request: any): Observable<ApiResponse<Reservation>> {
+        return this.http.put<ApiResponse<Reservation>>(`${this.apiUrl}/${reservationId}`, request);
+    }
+
     getMyBookings(): Observable<ApiResponse<any>> {
         return this.http.get<ApiResponse<any>>(`${this.apiUrl}?page=0&size=10`);
+    }
+
+    checkCancellation(reservationId: string): Observable<ApiResponse<any>> {
+        return this.http.get<ApiResponse<any>>(`${this.apiUrl}/${reservationId}/check-cancellation`);
     }
 
     cancelReservation(reservationId: string): Observable<ApiResponse<any>> {

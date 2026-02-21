@@ -3,16 +3,18 @@ import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { AdminRoomService } from '../../../core/services/admin-room.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
-    selector: 'app-admin-room-bulk-import',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ButtonComponent,
-        LoadingSpinnerComponent
-    ],
-    template: `
+  // ... (skip template changes, they are unchanged up to export class)
+  selector: 'app-admin-room-bulk-import',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ButtonComponent,
+    LoadingSpinnerComponent
+  ],
+  template: `
     <div class="bg-card rounded-xl border border-border p-6">
       <h2 class="text-xl font-bold text-foreground mb-4">Bulk Import Rooms</h2>
       
@@ -115,72 +117,76 @@ import { AdminRoomService } from '../../../core/services/admin-room.service';
       </div>
     </div>
   `,
-    styles: []
+  styles: []
 })
 export class AdminRoomBulkImportComponent {
-    selectedFile: File | null = null;
-    isUploading = false;
-    importResult: any = null;
-    errorMessage = '';
+  selectedFile: File | null = null;
+  isUploading = false;
+  importResult: any = null;
+  errorMessage = '';
 
-    constructor(private adminRoomService: AdminRoomService) { }
+  constructor(
+    private adminRoomService: AdminRoomService,
+    private toastService: ToastService
+  ) { }
 
-    onFileSelected(event: any) {
-        const file = event.target.files[0];
-        if (file) {
-            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-                this.errorMessage = 'Please upload a valid CSV file.';
-                return;
-            }
-            this.selectedFile = file;
-            this.errorMessage = '';
-            this.importResult = null;
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+        this.errorMessage = 'Please upload a valid CSV file.';
+        return;
+      }
+      this.selectedFile = file;
+      this.errorMessage = '';
+      this.importResult = null;
+    }
+  }
+
+  clearFile() {
+    this.selectedFile = null;
+    this.errorMessage = '';
+    this.importResult = null;
+  }
+
+  downloadTemplate() {
+    this.adminRoomService.downloadTemplate().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'rooms_template.csv';
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.errorMessage = 'Failed to download template.';
+      }
+    });
+  }
+
+  uploadFile() {
+    if (!this.selectedFile) return;
+
+    this.isUploading = true;
+    this.errorMessage = '';
+    this.importResult = null;
+
+    this.adminRoomService.bulkImportRooms(this.selectedFile).subscribe({
+      next: (response) => {
+        this.isUploading = false;
+        if (response.success) {
+          this.importResult = response.data;
+          if (this.importResult.failure === 0) {
+            this.selectedFile = null;
+            this.toastService.success('Bulk upload is successful');
+          }
         }
-    }
-
-    clearFile() {
-        this.selectedFile = null;
-        this.errorMessage = '';
-        this.importResult = null;
-    }
-
-    downloadTemplate() {
-        this.adminRoomService.downloadTemplate().subscribe({
-            next: (blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'rooms_template.csv';
-                link.click();
-                window.URL.revokeObjectURL(url);
-            },
-            error: () => {
-                this.errorMessage = 'Failed to download template.';
-            }
-        });
-    }
-
-    uploadFile() {
-        if (!this.selectedFile) return;
-
-        this.isUploading = true;
-        this.errorMessage = '';
-        this.importResult = null;
-
-        this.adminRoomService.bulkImportRooms(this.selectedFile).subscribe({
-            next: (response) => {
-                this.isUploading = false;
-                if (response.success) {
-                    this.importResult = response.data;
-                    if (this.importResult.failure === 0) {
-                        this.selectedFile = null;
-                    }
-                }
-            },
-            error: (error) => {
-                this.isUploading = false;
-                this.errorMessage = error.error?.message || 'Failed to import rooms.';
-            }
-        });
-    }
+      },
+      error: (error) => {
+        this.isUploading = false;
+        this.errorMessage = error.error?.message || 'Failed to import rooms.';
+      }
+    });
+  }
 }

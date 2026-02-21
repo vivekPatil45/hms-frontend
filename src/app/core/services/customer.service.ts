@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../shared/utils/constants';
 import { User, ApiResponse } from '../../models/user.model';
 
-import { Complaint, CreateComplaintData } from '../../models/complaint.model';
+import { Complaint } from '../../models/complaint.model';
 
 export interface ComplaintRequest {
     reservationId?: string | null;

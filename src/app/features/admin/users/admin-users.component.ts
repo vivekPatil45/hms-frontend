@@ -79,9 +79,33 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
                     <span *ngIf="sortBy === 'username'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
                   </div>
                 </th>
-                <th class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Full Name</th>
-                <th class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
-                <th class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th 
+                  class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  (click)="onSort('fullName')"
+                >
+                  <div class="flex items-center gap-1">
+                    Full Name
+                    <span *ngIf="sortBy === 'fullName'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+                  </div>
+                </th>
+                <th 
+                  class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  (click)="onSort('role')"
+                >
+                  <div class="flex items-center gap-1">
+                    Role
+                    <span *ngIf="sortBy === 'role'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+                  </div>
+                </th>
+                <th 
+                  class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  (click)="onSort('status')"
+                >
+                  <div class="flex items-center gap-1">
+                    Status
+                    <span *ngIf="sortBy === 'status'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span>
+                  </div>
+                </th>
                 <th 
                   class="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   (click)="onSort('createdAt')"
@@ -551,7 +575,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   confirmDeactivate(user: UserResponse) {
-    if (confirm(`Are you sure you want to deactivate ${user.username}?`)) {
+    if (confirm(`Are you sure you want to deactivate the customer?`)) {
       this.adminUserService.deactivateUser(user.userId).subscribe({
         next: (response) => {
           if (response.success) {

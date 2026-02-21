@@ -1,12 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { User, UserRole } from '../../../models/user.model';
+import { UserResponse } from '../../../models/user-management.model';
+import { UserRole } from '../../../models/user.model';
+import { AdminUserService } from '../../../core/services/admin-user.service';
 
 @Component({
   selector: 'app-admin-customers',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent],
   template: `
     <div class="space-y-6 animate-fade-in">
       <div class="flex justify-between items-center">
@@ -25,8 +28,11 @@ import { User, UserRole } from '../../../models/user.model';
               type="text"
               placeholder="Search customers..."
               class="h-9 w-64 pl-9 pr-3 rounded-md border border-input bg-background text-sm"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="loadCustomers()"
             />
           </div>
+          <app-button size="sm" (click)="loadCustomers()">Search</app-button>
         </div>
       </div>
 
@@ -77,38 +83,35 @@ import { User, UserRole } from '../../../models/user.model';
   `,
   styles: []
 })
-export class AdminCustomersComponent {
-  customers: User[] = [
-    {
-      userId: '1',
-      username: 'alice',
-      fullName: 'Alice Johnson',
-      email: 'alice@example.com',
-      mobileNumber: '+1 (555) 123-4567',
-      role: UserRole.CUSTOMER,
-      createdAt: '2024-01-15T10:00:00Z'
-    },
-    {
-      userId: '2',
-      username: 'bob',
-      fullName: 'Bob Smith',
-      email: 'bob@example.com',
-      mobileNumber: '+1 (555) 234-5678',
-      role: UserRole.CUSTOMER,
-      createdAt: '2024-02-20T14:30:00Z'
-    },
-    {
-      userId: '3',
-      username: 'charlie',
-      fullName: 'Charlie Brown',
-      email: 'charlie@example.com',
-      mobileNumber: '+1 (555) 345-6789',
-      role: UserRole.CUSTOMER,
-      createdAt: '2024-03-10T09:15:00Z'
-    }
-  ];
+export class AdminCustomersComponent implements OnInit {
+  customers: UserResponse[] = [];
+  searchQuery = '';
+  isLoading = false;
+
+  constructor(private adminUserService: AdminUserService) { }
+
+  ngOnInit() {
+    this.loadCustomers();
+  }
+
+  loadCustomers() {
+    this.isLoading = true;
+    // Fetch only CUSTOMER roles
+    this.adminUserService.getAllUsers(0, 50, this.searchQuery || undefined, UserRole.CUSTOMER).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.customers = response.data.users;
+        }
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
+  }
 
   getInitials(name: string): string {
+    if (!name) return 'CU';
     return name
       .split(' ')
       .map(n => n[0])

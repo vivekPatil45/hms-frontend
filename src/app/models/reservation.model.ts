@@ -26,6 +26,8 @@ export interface Reservation {
     specialRequests?: string;
     createdAt?: string;
     updatedAt?: string;
+    cancellationDate?: string;
+    cancellationReason?: string;
 }
 
 // Create reservation data

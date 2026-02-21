@@ -1,0 +1,22 @@
+
+> hms-frontend@0.0.0 build
+> ng build
+
+- Building...
+
+Application bundle generation failed. [9.968 seconds]
+
+X [ERROR] NG5002: Unclosed block "else" [plugin angular-compiler]
+
+    src/app/features/customer/history/customer-history.component.ts:62:8:
+      62 │       } @else {
+         ╵         ~~~~~~~
+
+
+X [ERROR] NG5002: Unclosed block "for" [plugin angular-compiler]
+
+    src/app/features/customer/history/customer-history.component.ts:77:16:
+      77 │ ...          @for (booking of filteredBookings; track booking.rese...
+         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+

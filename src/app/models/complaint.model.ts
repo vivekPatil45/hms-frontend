@@ -40,12 +40,13 @@ export interface ActionLog {
     timestamp: string;
 }
 
-// Create complaint data
-export interface CreateComplaintData {
+// Create complaint data (matches backend ComplaintRequest)
+export interface ComplaintRequest {
+    reservationId?: string;
+    category: string;
     title: string;
     description: string;
-    category: string;
-    priority: ComplaintPriority;
+    contactPreference: string;
 }
 
 // Update complaint data

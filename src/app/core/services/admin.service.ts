@@ -13,6 +13,11 @@ export class AdminService {
 
     constructor(private http: HttpClient) { }
 
+    // ============ DASHBOARD ============
+    getDashboardStats(): Observable<ApiResponse<any>> {
+        return this.http.get<ApiResponse<any>>(`${this.apiUrl}/dashboard`);
+    }
+
     // ============ COMPLAINT MANAGEMENT ============
 
     getAllComplaints(filters?: {

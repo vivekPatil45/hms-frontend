@@ -32,6 +32,12 @@ export class AdminRoomService {
             if (filters.minPrice !== undefined) params = params.set('minPrice', filters.minPrice.toString());
             if (filters.maxPrice !== undefined) params = params.set('maxPrice', filters.maxPrice.toString());
             if (filters.availability !== undefined) params = params.set('availability', filters.availability.toString());
+            if (filters.amenities && filters.amenities.length > 0) {
+                filters.amenities.forEach(a => params = params.append('amenities', a));
+            }
+            if (filters.maxOccupancy !== undefined) params = params.set('maxOccupancy', filters.maxOccupancy.toString());
+            if (filters.availabilityDate) params = params.set('availabilityDate', filters.availabilityDate);
+            if (filters.searchQuery) params = params.set('q', filters.searchQuery);
             if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
             if (filters.sortOrder) params = params.set('sortOrder', filters.sortOrder);
         }
