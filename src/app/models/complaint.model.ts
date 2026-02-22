@@ -26,6 +26,7 @@ export interface Complaint {
     status: ComplaintStatus;
     contactPreference?: string;
     expectedResolutionDate?: string;
+    assignedTo?: string;
     resolutionNotes?: string;
     actionLog?: ActionLog[];
     createdAt?: string;

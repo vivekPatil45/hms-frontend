@@ -148,8 +148,8 @@ import { ToastService } from '../../../core/services/toast.service';
                     <td class="py-3 px-4 text-sm text-foreground">{{ room.floor }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ room.maxOccupancy }}</td>
                     <td class="py-3 px-4 text-sm font-medium text-foreground">\${{ room.pricePerNight }}</td>
-                    <td class="py-3 px-4 text-sm text-muted-foreground truncate max-w-[150px]" [title]="room.amenities?.join(', ') || 'None'">
-                        {{ room.amenities?.join(', ') || 'None' }}
+                    <td class="py-3 px-4 text-sm text-muted-foreground truncate max-w-[150px]" [title]="room.amenities.join(', ') || 'None'">
+                        {{ room.amenities.join(', ') || 'None' }}
                     </td>
                     <td class="py-3 px-4">
                       <app-status-badge [status]="room.currentStatus || 'AVAILABLE'"></app-status-badge>

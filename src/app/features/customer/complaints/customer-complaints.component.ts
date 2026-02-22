@@ -79,9 +79,19 @@ import { AuthService } from '../../../core/services/auth.service';
                 </span>
               </div>
               
-              <app-button variant="outline" size="sm" class="w-full" (click)="viewComplaint(complaint)">
-                View Details
-              </app-button>
+              <div class="flex gap-2 pt-3 border-t border-border">
+                <app-button variant="outline" size="sm" class="flex-1" (click)="viewComplaint(complaint)">
+                  View Details
+                </app-button>
+                @if (complaint.status === 'OPEN') {
+                  <app-button variant="ghost" size="sm" class="flex-1" (click)="openEditModal(complaint)">
+                    <svg class="h-4 w-4 mr-1 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </app-button>
+                }
+              </div>
             </div>
           </div>
         }
@@ -119,10 +129,10 @@ import { AuthService } from '../../../core/services/auth.service';
       }
     </div>
 
-    <!-- New Complaint Modal -->
+    <!-- Complaint Modal (New/Edit) -->
     <app-modal
       [isOpen]="isModalOpen"
-      title="File a Complaint"
+      [title]="isEditing ? 'Edit Complaint' : 'File a Complaint'"
       (close)="closeModal()"
     >
       <form [formGroup]="complaintForm" (ngSubmit)="onSubmit()">
@@ -233,11 +243,15 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <app-button type="submit" [disabled]="complaintForm.invalid || isSubmitting">
             @if (isSubmitting) {
-                Sending...
+                {{ isEditing ? 'Updating...' : 'Sending...' }}
             } @else {
-                Submit Complaint
+                {{ isEditing ? 'Update Complaint' : 'Submit Complaint' }}
             }
           </app-button>
+        </div>
+      </form>
+    </app-modal>
+
     <!-- Success Modal -->
     <app-modal [isOpen]="showSuccessModal" title="Success" (close)="closeSuccessModal()">
       <div class="space-y-4">
@@ -365,6 +379,8 @@ export class CustomerComplaintsComponent implements OnInit {
   isUpdatingStatus = false;
   detailError = '';
   complaintForm: FormGroup;
+  isEditing = false;
+  editingComplaintId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -424,13 +440,32 @@ export class CustomerComplaintsComponent implements OnInit {
   }
 
   openNewComplaintModal() {
+    this.isEditing = false;
+    this.editingComplaintId = null;
     this.isModalOpen = true;
     this.error = '';
     this.complaintForm.reset();
   }
 
+  openEditModal(complaint: Complaint) {
+    this.isEditing = true;
+    this.editingComplaintId = complaint.complaintId;
+    this.isModalOpen = true;
+    this.error = '';
+
+    this.complaintForm.patchValue({
+      category: complaint.category,
+      reservationId: complaint.bookingId || '',
+      title: complaint.title,
+      description: complaint.description,
+      contactPreference: complaint.contactPreference
+    });
+  }
+
   closeModal() {
     this.isModalOpen = false;
+    this.isEditing = false;
+    this.editingComplaintId = null;
     this.complaintForm.reset();
     this.error = '';
   }
@@ -527,25 +562,44 @@ export class CustomerComplaintsComponent implements OnInit {
         reservationId: formValue.reservationId || null // Send null instead of undefined
       };
 
-      this.customerService.createComplaint(newComplaint).subscribe({
-        next: (response) => {
-          this.isSubmitting = false;
-          if (response.success) {
-            this.successMessage = `Your complaint has been successfully submitted. Complaint ID: #${response.data.complaintId}. Our support team will get back to you soon.`;
-            this.showSuccessModal = true;
-            this.closeModal(); // Close form modal
-            this.loadComplaints(); // Reload list
+      if (this.isEditing && this.editingComplaintId) {
+        this.customerService.updateComplaint(this.editingComplaintId, newComplaint).subscribe({
+          next: (response) => {
+            this.isSubmitting = false;
+            if (response.success) {
+              this.successMessage = `Your complaint #${response.data.complaintId} has been successfully updated.`;
+              this.showSuccessModal = true;
+              this.closeModal();
+              this.loadComplaints();
+            }
+          },
+          error: (err) => {
+            this.isSubmitting = false;
+            console.error('Error updating complaint', err);
+            this.error = err.error?.message || 'Failed to update complaint. Please try again.';
           }
-        },
-        error: (err) => {
-          this.isSubmitting = false;
-          console.error('Error creating complaint', err);
-          this.error = 'Failed to submit complaint. Please try again.';
-          if (err.error && err.error.message) {
-            this.error = err.error.message;
+        });
+      } else {
+        this.customerService.createComplaint(newComplaint).subscribe({
+          next: (response) => {
+            this.isSubmitting = false;
+            if (response.success) {
+              this.successMessage = `Your complaint has been successfully submitted. Complaint ID: #${response.data.complaintId}. Our support team will get back to you soon.`;
+              this.showSuccessModal = true;
+              this.closeModal(); // Close form modal
+              this.loadComplaints(); // Reload list
+            }
+          },
+          error: (err) => {
+            this.isSubmitting = false;
+            console.error('Error creating complaint', err);
+            this.error = 'Failed to submit complaint. Please try again.';
+            if (err.error && err.error.message) {
+              this.error = err.error.message;
+            }
           }
-        }
-      });
+        });
+      }
     } else {
       this.complaintForm.markAllAsTouched();
     }

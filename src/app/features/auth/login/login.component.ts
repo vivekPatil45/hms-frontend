@@ -24,15 +24,6 @@ import { AuthService } from '../../../core/services/auth.service';
         <p class="text-muted-foreground mt-2">Sign in to your account</p>
       </div>
 
-      <!-- Demo Credentials -->
-      <div class="mb-6 p-4 bg-muted/50 rounded-lg text-sm border border-border">
-        <p class="font-semibold text-foreground mb-2">Demo Credentials:</p>
-        <div class="space-y-1 text-muted-foreground">
-          <p>Customer: customer / password123</p>
-          <p>Admin: admin / admin123</p>
-          <p>Staff: staff / staff123</p>
-        </div>
-      </div>
 
       <!-- Error Message -->
       @if (error) {

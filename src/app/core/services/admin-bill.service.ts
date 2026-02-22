@@ -46,4 +46,24 @@ export class AdminBillService {
 
         return this.http.get<{ success: boolean; message: string; data: AdminBillResponse }>(this.apiUrl, { params });
     }
+
+    generateBill(reservationId: string): Observable<{ success: boolean; message: string; data: any }> {
+        return this.http.post<{ success: boolean; message: string; data: any }>(`${this.apiUrl}/generate/${reservationId}`, {});
+    }
+
+    updateBillMetrics(billId: string, taxRate?: number, discountAmount?: number): Observable<{ success: boolean; message: string; data: any }> {
+        return this.http.put<{ success: boolean; message: string; data: any }>(`${this.apiUrl}/${billId}/metrics`, { taxRate, discountAmount });
+    }
+
+    addBillItem(billId: string, item: any): Observable<{ success: boolean; message: string; data: any }> {
+        return this.http.post<{ success: boolean; message: string; data: any }>(`${this.apiUrl}/${billId}/items`, item);
+    }
+
+    removeBillItem(billId: string, itemId: string): Observable<{ success: boolean; message: string; data: any }> {
+        return this.http.delete<{ success: boolean; message: string; data: any }>(`${this.apiUrl}/${billId}/items/${itemId}`);
+    }
+
+    markBillAsPaid(billId: string, amount: number, paymentMethod: string = 'CASH'): Observable<{ success: boolean; message: string; data: any }> {
+        return this.http.post<{ success: boolean; message: string; data: any }>(`${this.apiUrl}/${billId}/pay`, { amount, paymentMethod });
+    }
 }

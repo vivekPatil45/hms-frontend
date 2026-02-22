@@ -18,7 +18,7 @@ import { User } from '../../../models/user.model';
     FooterComponent
   ],
   template: `
-    <div class="min-h-screen bg-background">
+    <div class="flex flex-col min-h-screen bg-background">
       <!-- Header -->
       <app-header 
         (menuToggle)="toggleSidebar()" 
@@ -27,7 +27,7 @@ import { User } from '../../../models/user.model';
       ></app-header>
 
       <!-- Main Content Area -->
-      <div class="flex pt-16 min-h-[calc(100vh-4rem)]">
+      <div class="flex flex-1 pt-16">
         <!-- Sidebar -->
         <app-sidebar 
           [isOpen]="isSidebarOpen"
@@ -38,7 +38,7 @@ import { User } from '../../../models/user.model';
 
         <!-- Main Content -->
         <main 
-          class="flex-1 flex flex-col transition-all duration-300 lg:ml-64" 
+          class="flex-1 flex flex-col transition-all duration-300 lg:ml-64 relative" 
         >
           <div class="flex-1 p-6">
             <router-outlet></router-outlet>

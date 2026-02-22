@@ -54,18 +54,54 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
 
       <div *ngIf="!isLoading && stats" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <!-- Dashboard Summary Detail -->
+        <!-- Booking Trends & Daily Activity -->
         <div class="bg-card rounded-xl border border-border p-6 flex flex-col justify-center">
-          <h3 class="font-semibold text-lg mb-4 text-center">Daily Activity Overview</h3>
-          <div class="flex justify-around items-center">
-            <div class="text-center p-4">
-              <span class="block text-4xl font-bold text-success">{{ stats?.todayCheckIns }}</span>
-              <span class="text-sm text-muted-foreground mt-2 block">Check-ins</span>
+          <h3 class="font-semibold text-lg mb-4 text-center">Booking Trends & Activity</h3>
+          
+          <div class="grid grid-cols-3 gap-2 text-center mb-6">
+            <div class="p-2 rounded bg-muted/30">
+              <span class="block text-2xl font-bold text-primary">{{ stats?.dailyBookings || 0 }}</span>
+              <span class="text-xs text-muted-foreground mt-1 block uppercase tracking-wider">Today</span>
             </div>
-            <div class="h-16 w-px bg-border"></div>
-            <div class="text-center p-4">
-              <span class="block text-4xl font-bold text-warning">{{ stats?.todayCheckOuts }}</span>
-              <span class="text-sm text-muted-foreground mt-2 block">Check-outs</span>
+            <div class="p-2 rounded bg-muted/30">
+              <span class="block text-2xl font-bold text-primary">{{ stats?.weeklyBookings || 0 }}</span>
+              <span class="text-xs text-muted-foreground mt-1 block uppercase tracking-wider">This Week</span>
+            </div>
+            <div class="p-2 rounded bg-muted/30">
+              <span class="block text-2xl font-bold text-primary">{{ stats?.monthlyBookings || 0 }}</span>
+              <span class="text-xs text-muted-foreground mt-1 block uppercase tracking-wider">This Month</span>
+            </div>
+          </div>
+
+          <!-- Simple Bar Chart Representation -->
+          <div class="mt-2 mb-6">
+             <div class="flex items-end justify-between h-24 gap-2 px-4">
+                 <div class="w-full bg-primary/20 rounded-t flex items-end justify-center pb-2 relative group" [style.height.%]="(stats?.dailyBookings / (stats?.monthlyBookings || 1)) * 100 + 10">
+                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.dailyBookings }}</span>
+                 </div>
+                 <div class="w-full bg-primary/50 rounded-t flex items-end justify-center pb-2 relative group" [style.height.%]="(stats?.weeklyBookings / (stats?.monthlyBookings || 1)) * 100 + 10">
+                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.weeklyBookings }}</span>
+                 </div>
+                 <div class="w-full bg-primary rounded-t flex items-end justify-center pb-2 relative group" style="height: 100%;">
+                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.monthlyBookings }}</span>
+                 </div>
+             </div>
+             <div class="flex justify-between px-4 mt-2 text-xs text-muted-foreground border-t border-border pt-2">
+                 <span class="w-full text-center">Daily</span>
+                 <span class="w-full text-center">Weekly</span>
+                 <span class="w-full text-center">Monthly</span>
+             </div>
+          </div>
+
+          <div class="flex justify-around items-center border-t border-border pt-4">
+            <div class="text-center px-4">
+              <span class="block text-3xl font-bold text-success">{{ stats?.todayCheckIns }}</span>
+              <span class="text-sm text-muted-foreground mt-1 block">Check-ins</span>
+            </div>
+            <div class="h-12 w-px bg-border"></div>
+            <div class="text-center px-4">
+              <span class="block text-3xl font-bold text-warning">{{ stats?.todayCheckOuts }}</span>
+              <span class="text-sm text-muted-foreground mt-1 block">Check-outs</span>
             </div>
           </div>
         </div>

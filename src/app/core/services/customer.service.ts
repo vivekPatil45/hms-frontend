@@ -52,4 +52,8 @@ export class CustomerService {
     updateComplaintStatus(complaintId: string, status: string): Observable<ApiResponse<Complaint>> {
         return this.http.put<ApiResponse<Complaint>>(`${this.complaintsUrl}/${complaintId}/status`, { status });
     }
+
+    updateComplaint(complaintId: string, complaint: ComplaintRequest): Observable<ApiResponse<Complaint>> {
+        return this.http.put<ApiResponse<Complaint>>(`${this.complaintsUrl}/${complaintId}`, complaint);
+    }
 }

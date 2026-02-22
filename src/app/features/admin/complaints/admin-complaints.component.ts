@@ -74,6 +74,28 @@ import { ToastService } from '../../../core/services/toast.service';
               (change)="applyFilters()"
               class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground">
           </div>
+          <div>
+            <label class="text-sm font-medium text-foreground block mb-2">Date To</label>
+            <input 
+              type="date" 
+              [(ngModel)]="filters.dateTo" 
+              (change)="applyFilters()"
+              class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground">
+          </div>
+          <div class="md:col-span-4">
+            <label class="text-sm font-medium text-foreground block mb-2">Search</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                [(ngModel)]="filters.search" 
+                (keyup.enter)="applyFilters()"
+                placeholder="Search by Customer Name, ID, or Complaint ID..."
+                class="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground">
+              <svg class="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -153,6 +175,23 @@ import { ToastService } from '../../../core/services/toast.service';
                     </svg>
                     <span class="text-muted-foreground">{{ complaint.category }}</span>
                   </div>
+                  @if (complaint.assignedTo) {
+                    <div class="flex items-center gap-2 text-sm">
+                      <svg class="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <span class="text-primary font-medium">
+                        Assigned: {{ getStaffName(complaint.assignedTo) }}
+                      </span>
+                    </div>
+                  } @else {
+                    <div class="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400 italic">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Unassigned
+                    </div>
+                  }
                 </div>
 
                 <!-- Action Button -->
@@ -356,7 +395,9 @@ export class AdminComplaintsComponent implements OnInit {
     status: '',
     category: '',
     priority: '',
-    dateFrom: ''
+    dateFrom: '',
+    dateTo: '',
+    search: ''
   };
 
   // Form data for admin actions
@@ -392,6 +433,8 @@ export class AdminComplaintsComponent implements OnInit {
     if (this.filters.category) filterParams.category = this.filters.category;
     if (this.filters.priority) filterParams.priority = this.filters.priority;
     if (this.filters.dateFrom) filterParams.dateFrom = this.filters.dateFrom;
+    if (this.filters.dateTo) filterParams.dateTo = this.filters.dateTo;
+    if (this.filters.search) filterParams.search = this.filters.search;
 
     this.adminService.getAllComplaints(filterParams).subscribe({
       next: (response) => {
@@ -555,6 +598,11 @@ export class AdminComplaintsComponent implements OnInit {
       'LOW': 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-700'
     };
     return classes[priority] || 'text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700';
+  }
+
+  getStaffName(userId: string): string {
+    const staff = this.staffUsers.find(s => s.userId === userId || s.id === userId);
+    return staff ? staff.fullName : `Staff #${userId}`;
   }
 }
 

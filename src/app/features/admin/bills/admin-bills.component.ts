@@ -5,11 +5,12 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { AdminBillService } from '../../../core/services/admin-bill.service';
 import { finalize } from 'rxjs/operators';
+import { AdminBillModalComponent } from './admin-bill-modal.component';
 
 @Component({
   selector: 'app-admin-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, StatusBadgeComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, StatusBadgeComponent, AdminBillModalComponent],
   template: `
     <div class="space-y-6 animate-fade-in">
       <div class="flex justify-between items-center">
@@ -19,7 +20,7 @@ import { finalize } from 'rxjs/operators';
             Manage billing and payment transactions
           </p>
         </div>
-        <app-button>
+        <app-button (click)="openGenerateModal()">
           <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -154,7 +155,7 @@ import { finalize } from 'rxjs/operators';
                 @for (bill of bills; track $index) {
                   <tr class="hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4 font-medium text-foreground">#{{ bill.billId }}</td>
-                    <td class="py-3 px-4 text-sm text-foreground">RES-{{ bill.reservation?.reservationId }}</td>
+                    <td class="py-3 px-4 text-sm text-foreground">{{ bill.reservation?.reservationId }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ bill.customer?.user?.fullName }}</td>
                     <td class="py-3 px-4 text-sm font-medium text-foreground">\${{ bill.totalAmount | number:'1.2-2' }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ bill.paymentMethod || 'N/A' }}</td>
@@ -165,13 +166,13 @@ import { finalize } from 'rxjs/operators';
                       <app-status-badge [status]="bill.paymentStatus"></app-status-badge>
                     </td>
                     <td class="py-3 px-4 text-right">
-                      <app-button variant="ghost" size="sm" class="mr-2">
+                      <app-button variant="ghost" size="sm" class="mr-2" (click)="openEditModal(bill)">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </app-button>
                       @if (bill.paymentStatus === 'PENDING') {
-                        <app-button variant="outline" size="sm">
+                        <app-button variant="outline" size="sm" (click)="markPaid(bill)">
                           Mark Paid
                         </app-button>
                       }
@@ -222,6 +223,15 @@ import { finalize } from 'rxjs/operators';
           </div>
         </div>
       </div>
+
+      <!-- Generate / Edit Bill Modal -->
+      <app-admin-bill-modal
+        [isOpen]="isModalOpen"
+        [view]="modalView"
+        [bill]="selectedBill"
+        (modalClosed)="onModalClosed($event)"
+      ></app-admin-bill-modal>
+
     </div>
   `,
   styles: []
@@ -229,6 +239,11 @@ import { finalize } from 'rxjs/operators';
 export class AdminBillsComponent implements OnInit {
   bills: any[] = [];
   isLoading = false;
+
+  // Modal State
+  isModalOpen = false;
+  modalView: 'generate' | 'edit' = 'generate';
+  selectedBill: any = null;
 
   // Pagination
   currentPage = 0;
@@ -335,5 +350,46 @@ export class AdminBillsComponent implements OnInit {
     this.pageSize = Number(event.target.value);
     this.currentPage = 0;
     this.loadBills();
+  }
+
+  // Modal Handlers
+  openGenerateModal() {
+    this.modalView = 'generate';
+    this.selectedBill = null;
+    this.isModalOpen = true;
+  }
+
+  openEditModal(bill: any) {
+    this.modalView = 'edit';
+    this.selectedBill = bill;
+    this.isModalOpen = true;
+  }
+
+  onModalClosed(refresh: boolean) {
+    this.isModalOpen = false;
+    this.selectedBill = null;
+    if (refresh) {
+      this.loadBills();
+    }
+  }
+
+  markPaid(bill: any) {
+    if (confirm(`Are you sure you want to mark bill #${bill.billId} as PAID?`)) {
+      this.isLoading = true;
+      this.adminBillService.markBillAsPaid(bill.billId, bill.balanceAmount, 'CASH').subscribe({
+        next: (res) => {
+          this.isLoading = false;
+          if (res.success) {
+            this.loadBills();
+          } else {
+            alert(res.message || 'Failed to mark as paid');
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          alert(err.error?.message || 'Failed to mark as paid');
+        }
+      });
+    }
   }
 }

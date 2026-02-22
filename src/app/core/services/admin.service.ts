@@ -25,6 +25,8 @@ export class AdminService {
         category?: string;
         priority?: string;
         dateFrom?: string;
+        dateTo?: string;
+        search?: string;
     }): Observable<ApiResponse<Complaint[]>> {
         let params = new HttpParams();
 
@@ -33,6 +35,8 @@ export class AdminService {
             if (filters.category) params = params.set('category', filters.category);
             if (filters.priority) params = params.set('priority', filters.priority);
             if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+            if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+            if (filters.search) params = params.set('search', filters.search);
         }
 
         return this.http.get<ApiResponse<Complaint[]>>(`${this.apiUrl}/complaints`, { params });
