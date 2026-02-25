@@ -25,8 +25,8 @@ import { AuthService } from '../../../core/services/auth.service';
       <div *ngIf="!isLoading && stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-stats-card
           title="Total Revenue"
-          [value]="'$' + (stats?.totalRevenue | number:'1.2-2')"
-          icon="$"
+          [value]="'₹' + (stats?.totalRevenue | number:'1.2-2')"
+          icon="₹"
           [change]="12.5"
           description="vs last month"
         ></app-stats-card>
@@ -123,7 +123,7 @@ import { AuthService } from '../../../core/services/auth.service';
                     </div>
                   </div>
                   <div class="text-right">
-                    <p class="font-medium text-foreground">+\${{ booking.amount | number:'1.2-2' }}</p>
+                    <p class="font-medium text-foreground">+₹{{ booking.amount | number:'1.2-2' }}</p>
                     <p class="text-sm text-muted-foreground">{{ booking.date | date:'MMM d, h:mm a' }}</p>
                   </div>
                 </div>

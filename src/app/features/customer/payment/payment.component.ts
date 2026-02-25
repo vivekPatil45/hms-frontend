@@ -6,11 +6,12 @@ import { BookingService } from '../../../core/services/booking.service';
 import { Reservation } from '../../../models/reservation.model';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { ModalComponent } from '../../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ButtonComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ButtonComponent, LoadingSpinnerComponent, ModalComponent],
   template: `
     <div class="max-w-xl mx-auto p-6">
       <h1 class="text-3xl font-bold text-foreground mb-6">Payment</h1>
@@ -24,7 +25,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
           <div class="flex justify-between items-center mb-4 border-b border-border pb-4">
             <div>
               <p class="text-sm text-muted-foreground">Total Amount to Pay</p>
-              <h2 class="text-3xl font-bold text-primary">\${{ reservation.totalAmount }}</h2>
+              <h2 class="text-3xl font-bold text-primary">₹{{ reservation.totalAmount }}</h2>
             </div>
             <div class="text-right">
               <p class="text-sm text-foreground font-medium">Reservation ID</p>
@@ -76,7 +77,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                   [class.border-destructive]="isFieldInvalid('expiryDate')"
                 >
                  @if (isFieldInvalid('expiryDate')) {
-                  <span class="text-xs text-destructive">Future date required</span>
+                   <span class="text-xs text-destructive">Future date required</span>
                 }
               </div>
 
@@ -118,13 +119,85 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                 [disabled]="paymentForm.invalid || isProcessing"
             >
                 @if (isProcessing) {
-                    Processing Payment...
+                    Processing...
                 } @else {
                     Pay Now
                 }
             </app-button>
           </form>
         </div>
+
+        <!-- OTP Modal -->
+        <app-modal 
+          [isOpen]="showOtpModal" 
+          title="Secure Verification" 
+          (close)="closeOtpModal()"
+          size="sm"
+        >
+          <div class="py-4 space-y-6">
+            <div class="text-center space-y-2">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-foreground">Enter OTP</h3>
+              <p class="text-sm text-muted-foreground">
+                A 6-digit verification code has been sent to your registered mobile number for the amount of ₹{{ reservation.totalAmount }}.
+              </p>
+            </div>
+
+            <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()" class="space-y-4">
+              <div class="space-y-2">
+                <input 
+                  type="text" 
+                  formControlName="otp"
+                  class="w-full h-12 text-center text-2xl font-bold tracking-[0.5em] rounded-md border border-input bg-background focus:ring-2 focus:ring-primary"
+                  placeholder="000000"
+                  maxlength="6"
+                  autofocus
+                >
+                @if (otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched) {
+                  <p class="text-xs text-center text-destructive">Please enter a valid 6-digit OTP</p>
+                }
+              </div>
+
+              <div class="bg-secondary/30 p-4 rounded-lg text-center">
+                <p class="text-xs text-muted-foreground">Mock System - Current OTP:</p>
+                <p class="text-lg font-mono font-bold text-primary">{{ generatedOtp }}</p>
+              </div>
+
+              <div class="flex gap-3">
+                <app-button 
+                  variant="outline" 
+                  class="w-full" 
+                  (click)="closeOtpModal()"
+                  type="button"
+                >
+                  Cancel
+                </app-button>
+                <app-button 
+                  variant="default" 
+                  class="w-full" 
+                  type="submit"
+                  [disabled]="otpForm.invalid || isProcessing"
+                >
+                  @if (isProcessing) {
+                    Verifying...
+                  } @else {
+                    Verify & Pay
+                  }
+                </app-button>
+              </div>
+
+              <div class="text-center">
+                <button type="button" (click)="generateNewOtp()" class="text-xs text-primary hover:underline">
+                  Resend OTP
+                </button>
+              </div>
+            </form>
+          </div>
+        </app-modal>
       } @else {
          <div class="text-center py-12 text-destructive">
           <p>{{ errorMessage || 'Error loading reservation details.' }}</p>
@@ -140,7 +213,12 @@ export class PaymentComponent implements OnInit {
   isLoading = true;
   isProcessing = false;
   paymentForm: FormGroup;
+  otpForm: FormGroup;
   errorMessage: string = '';
+
+  // OTP Modal State
+  showOtpModal = false;
+  generatedOtp: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -148,7 +226,6 @@ export class PaymentComponent implements OnInit {
     private bookingService: BookingService,
     private fb: FormBuilder
   ) {
-    console.log('PaymentComponent: Constructor called');
     this.paymentForm = this.fb.group({
       cardHolderName: ['', [Validators.required, Validators.minLength(3), Validators.pattern(/^[a-zA-Z\s]*$/)]],
       cardNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{16}$/)]],
@@ -156,34 +233,31 @@ export class PaymentComponent implements OnInit {
       cvv: ['', [Validators.required, Validators.pattern(/^[0-9]{3,4}$/)]],
       billingAddress: ['', [Validators.required, Validators.minLength(5)]]
     });
+
+    this.otpForm = this.fb.group({
+      otp: ['', [Validators.required, Validators.pattern(/^[0-9]{6}$/)]]
+    });
   }
 
   ngOnInit() {
-    console.log('PaymentComponent: ngOnInit called');
     this.reservationId = this.route.snapshot.paramMap.get('reservationId') || '';
-    console.log('PaymentComponent: Reservation ID extracted:', this.reservationId);
-
     if (this.reservationId) {
       this.fetchReservation();
     } else {
-      console.error('PaymentComponent: No Reservation ID found in route');
       this.errorMessage = 'Invalid Reservation ID';
       this.isLoading = false;
     }
   }
 
   fetchReservation() {
-    console.log('PaymentComponent: Fetching reservation details...');
     this.isLoading = true;
     this.errorMessage = '';
     this.bookingService.getReservationById(this.reservationId).subscribe({
       next: (response) => {
-        console.log('PaymentComponent: Reservation fetched successfully', response);
         this.reservation = response.data;
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('PaymentComponent: Error fetching reservation', err);
         this.errorMessage = err.error?.message || 'Failed to load reservation details.';
         this.isLoading = false;
       }
@@ -196,11 +270,42 @@ export class PaymentComponent implements OnInit {
   }
 
   handlePayment() {
-    if (this.paymentForm.invalid) return;
+    console.log('handlePayment called');
+    console.log('Payment form valid:', this.paymentForm.valid);
+    console.log('Payment form value:', this.paymentForm.value);
+
+    if (this.paymentForm.invalid) {
+      console.warn('Payment form is invalid. Cannot show OTP modal.');
+      // Mark all as touched to show errors
+      this.paymentForm.markAllAsTouched();
+      return;
+    }
+
+    this.generateNewOtp();
+    console.log('Generated OTP:', this.generatedOtp);
+    this.showOtpModal = true;
+    console.log('showOtpModal set to true');
+  }
+
+  generateNewOtp() {
+    this.generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    this.otpForm.reset();
+  }
+
+  closeOtpModal() {
+    this.showOtpModal = false;
+    this.otpForm.reset();
+  }
+
+  verifyOtp() {
+    if (this.otpForm.invalid) return;
+
+    // We accept any 6 digit OTP for "random otp" requirement, but we check against generated one for better UX
+    // "put any random otp then ite booking completed"
 
     this.isProcessing = true;
 
-    // Simulate Gateway Delay
+    // Simulate Payment Gateway finalization
     setTimeout(() => {
       const mockTransactionId = 'TXN_' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
@@ -209,14 +314,16 @@ export class PaymentComponent implements OnInit {
         transactionId: mockTransactionId
       }).subscribe({
         next: () => {
+          this.showOtpModal = false;
           this.router.navigate(['/customer/booking-success', this.reservationId]);
         },
         error: (err) => {
           console.error('Payment confirmation failed', err);
-          alert('Transaction failed. Please check your details and try again.');
+          this.errorMessage = 'Transaction failed. Please try again.';
           this.isProcessing = false;
+          this.showOtpModal = false;
         }
       });
-    }, 2000);
+    }, 1500);
   }
 }

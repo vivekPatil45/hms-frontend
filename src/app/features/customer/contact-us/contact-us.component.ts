@@ -2,10 +2,10 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-    selector: 'app-contact-us',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-contact-us',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="space-y-8 animate-fade-in max-w-4xl mx-auto p-6">
       <div class="text-center">
         <h1 class="text-3xl font-bold text-foreground">Contact Us</h1>
@@ -28,7 +28,7 @@ import { CommonModule } from '@angular/common';
             </div>
             <div>
               <h3 class="font-medium text-foreground">Visit Us</h3>
-              <p class="text-muted-foreground">123 Luxury Avenue, Paradise City, PC 54321</p>
+              <p class="text-muted-foreground">12, Koregaon Park Road, Pune, Maharashtra 411001</p>
             </div>
           </div>
 
@@ -40,8 +40,8 @@ import { CommonModule } from '@angular/common';
             </div>
             <div>
               <h3 class="font-medium text-foreground">Call Us</h3>
-              <p class="text-muted-foreground">+1 (555) 123-4567</p>
-              <p class="text-muted-foreground">+1 (555) 987-6543</p>
+              <p class="text-muted-foreground">+91 98765 43210</p>
+              <p class="text-muted-foreground">+91 91234 56789</p>
             </div>
           </div>
 
@@ -79,6 +79,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </div>
   `,
-    styles: []
+  styles: []
 })
 export class ContactUsComponent { }

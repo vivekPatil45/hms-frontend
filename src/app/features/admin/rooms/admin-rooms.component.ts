@@ -116,6 +116,7 @@ import { ToastService } from '../../../core/services/toast.service';
             <table class="w-full">
               <thead>
                 <tr class="bg-muted/50 border-b border-border">
+                  <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Photo</th>
                   <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm cursor-pointer hover:text-foreground" (click)="sortBy('roomNumber')">
                     Room # <span class="text-xs">{{ getSortIcon('roomNumber') }}</span>
                   </th>
@@ -143,11 +144,20 @@ import { ToastService } from '../../../core/services/toast.service';
               <tbody class="divide-y divide-border">
                 @for (room of rooms; track room.roomId) {
                   <tr class="hover:bg-muted/50 transition-colors">
+                    <td class="py-3 px-4">
+                        <div class="h-10 w-16 bg-muted rounded overflow-hidden">
+                            @if (room.images && room.images.length > 0) {
+                                <img [src]="room.images[0]" alt="Room" class="h-full w-full object-cover">
+                            } @else {
+                                <img [src]="getRandomRoomImage(room.roomNumber)" alt="Default" class="h-full w-full object-cover">
+                            }
+                        </div>
+                    </td>
                     <td class="py-3 px-4 font-medium text-foreground">{{ room.roomNumber }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ room.roomType }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ room.floor }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ room.maxOccupancy }}</td>
-                    <td class="py-3 px-4 text-sm font-medium text-foreground">\${{ room.pricePerNight }}</td>
+                    <td class="py-3 px-4 text-sm font-medium text-foreground">₹{{ room.pricePerNight }}</td>
                     <td class="py-3 px-4 text-sm text-muted-foreground truncate max-w-[150px]" [title]="room.amenities.join(', ') || 'None'">
                         {{ room.amenities.join(', ') || 'None' }}
                     </td>
@@ -322,7 +332,7 @@ import { ToastService } from '../../../core/services/toast.service';
             </div>
 
             <div class="space-y-2">
-              <label class="text-sm font-medium text-foreground">Price per Night ($) *</label>
+              <label class="text-sm font-medium text-foreground">Price per Night (₹) *</label>
               <input
                 type="number"
                 formControlName="pricePerNight"
@@ -690,5 +700,15 @@ export class AdminRoomsComponent implements OnInit {
         this.isSubmitting = false;
       }
     });
+  }
+
+  getRandomRoomImage(roomNumber: string): string {
+    const images = ['room1.png', 'room2.png', 'room3.png', 'room4.png', 'room5.png'];
+    let hash = 0;
+    for (let i = 0; i < roomNumber.length; i++) {
+      hash = roomNumber.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % images.length;
+    return `assets/${images[index]}`;
   }
 }

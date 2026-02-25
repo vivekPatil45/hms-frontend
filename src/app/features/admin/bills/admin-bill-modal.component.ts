@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { AdminBillService } from '../../../core/services/admin-bill.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-admin-bill-modal',
@@ -114,9 +115,9 @@ import { AdminBillService } from '../../../core/services/admin-bill.service';
                                 </div>
                               </td>
                               <td class="py-3 px-4 text-right font-medium text-foreground">
-                                \${{ item.totalPrice | number:'1.2-2' }}
+                                ₹{{ item.totalPrice | number:'1.2-2' }}
                                 @if (item.quantity > 1) {
-                                  <div class="text-[10px] text-muted-foreground mt-0.5">\${{ item.unitPrice | number:'1.2-2' }} each</div>
+                                  <div class="text-[10px] text-muted-foreground mt-0.5">₹{{ item.unitPrice | number:'1.2-2' }} each</div>
                                 }
                               </td>
                               <td class="py-3 pr-4 text-right">
@@ -186,7 +187,7 @@ import { AdminBillService } from '../../../core/services/admin-bill.service';
                   
                   <div class="flex justify-between items-center text-sm">
                     <span class="text-muted-foreground">Subtotal</span>
-                    <span class="font-medium text-foreground">\${{ bill.subtotal | number:'1.2-2' }}</span>
+                    <span class="font-medium text-foreground">₹{{ bill.subtotal | number:'1.2-2' }}</span>
                   </div>
                   
                   <div class="flex justify-between items-center text-sm group">
@@ -201,7 +202,7 @@ import { AdminBillService } from '../../../core/services/admin-bill.service';
                           <span class="text-muted-foreground text-xs bg-muted/50 px-2 py-0.5 rounded-full">{{ bill.taxRate }}%</span>
                       }
                     </div>
-                    <span class="font-medium text-foreground">\${{ bill.taxAmount | number:'1.2-2' }}</span>
+                    <span class="font-medium text-foreground">₹{{ bill.taxAmount | number:'1.2-2' }}</span>
                   </div>
 
                   <div class="flex justify-between items-center text-sm group">
@@ -214,24 +215,24 @@ import { AdminBillService } from '../../../core/services/admin-bill.service';
                           </div>
                       }
                     </div>
-                    <span class="text-green-600 font-semibold tracking-wide">-\${{ bill.discountAmount | number:'1.2-2' }}</span>
+                    <span class="text-green-600 font-semibold tracking-wide">-₹{{ bill.discountAmount | number:'1.2-2' }}</span>
                   </div>
 
                   <div class="border-t border-dashed border-border/70 my-4"></div>
 
                   <div class="flex justify-between items-center text-lg">
                     <span class="font-bold text-foreground">Total Due</span>
-                    <span class="font-black text-2xl text-primary tracking-tight">\${{ bill.totalAmount | number:'1.2-2' }}</span>
+                    <span class="font-black text-2xl text-primary tracking-tight">₹{{ bill.totalAmount | number:'1.2-2' }}</span>
                   </div>
                   
                   <div class="flex justify-between items-center text-sm pt-4 border-t border-border mt-4">
                     <span class="text-muted-foreground">Paid Amount</span>
-                    <span class="font-medium text-foreground">\${{ bill.paidAmount | number:'1.2-2' }}</span>
+                    <span class="font-medium text-foreground">₹{{ bill.paidAmount | number:'1.2-2' }}</span>
                   </div>
                   <div class="flex justify-between items-center text-sm mt-1">
                     <span class="text-muted-foreground font-medium">Balance</span>
                     <span class="font-bold text-[15px]" [class.text-destructive]="bill.balanceAmount > 0" [class.text-green-600]="bill.balanceAmount === 0">
-                      \${{ bill.balanceAmount | number:'1.2-2' }}
+                      ₹{{ bill.balanceAmount | number:'1.2-2' }}
                     </span>
                   </div>
                 </div>
@@ -278,7 +279,7 @@ export class AdminBillModalComponent implements OnChanges {
     serviceDate: ''
   };
 
-  constructor(private adminBillService: AdminBillService) {
+  constructor(private adminBillService: AdminBillService, private toastService: ToastService) {
     this.resetNewItem();
   }
 
@@ -336,7 +337,7 @@ export class AdminBillModalComponent implements OnChanges {
       next: (response) => {
         this.isLoading = false;
         if (response.success) {
-          alert('Bill generated successfully and stored in billing history!');
+          this.toastService.success('Bill generated successfully!');
           this.reservationId = '';
           this.customerId = '';
           this.modalClosed.emit(true);

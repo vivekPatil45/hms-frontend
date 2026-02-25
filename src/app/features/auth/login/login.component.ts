@@ -87,19 +87,21 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         <!-- Submit Button -->
-        <app-button 
-          type="submit" 
-          [disabled]="loginForm.invalid || isLoading"
-          className="w-full h-11"
-          size="lg"
-        >
-          @if (isLoading) {
-            <app-loading-spinner size="sm" class="mr-2"></app-loading-spinner>
-            Signing in...
-          } @else {
-            Sign In
-          }
-        </app-button>
+        <div class="mt-4">
+          <app-button 
+            type="submit" 
+            [disabled]="loginForm.invalid || isLoading"
+            className="w-full h-11"
+            size="lg"
+          >
+            @if (isLoading) {
+              <app-loading-spinner size="sm" class="mr-2"></app-loading-spinner>
+              Signing in...
+            } @else {
+              Sign In
+            }
+          </app-button>
+        </div>
       </form>
 
       <!-- Register Link -->

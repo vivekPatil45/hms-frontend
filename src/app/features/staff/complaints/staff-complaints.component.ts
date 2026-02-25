@@ -270,18 +270,17 @@ import { ToastService } from '../../../core/services/toast.service';
                     ></textarea>
                     <div class="absolute bottom-3 right-3 text-[10px] font-medium text-emerald-400 group-focus-within:text-emerald-500 transition-colors uppercase tracking-widest">Required for resolution</div>
                   </div>
-                  <app-button 
+                  <button 
+                    type="button"
                     (click)="resolveComplaint()" 
-                    variant="default" 
-                    class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white border-none font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 group" 
-                    size="sm" 
                     [disabled]="!resolveForm.resolutionNotes || isSubmitting"
+                    class="w-full h-12 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all group"
                   >
                     <svg class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    Confirm Resolution
-                  </app-button>
+                    {{ isSubmitting ? 'Processing...' : 'Confirm Resolution' }}
+                  </button>
                 </div>
               }
             </div>

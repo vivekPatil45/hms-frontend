@@ -42,7 +42,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
                 </div>
                  <div class="flex justify-between">
                     <span class="text-sm text-muted-foreground">Amount Paid</span>
-                    <span class="font-bold text-primary">\${{ reservation.totalAmount }}</span>
+                    <span class="font-bold text-primary">₹{{ reservation.totalAmount }}</span>
                 </div>
                  <div class="flex justify-between border-t border-border pt-4 mt-2">
                     <span class="text-sm text-muted-foreground">Room</span>

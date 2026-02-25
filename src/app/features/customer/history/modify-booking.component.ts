@@ -6,6 +6,7 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { BookingService } from '../../../core/services/booking.service';
 import { Reservation } from '../../../models/reservation.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
     selector: 'app-modify-booking',
@@ -70,11 +71,11 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-muted-foreground">Original Total:</span>
-                        <span>\${{ reservation.totalAmount }}</span>
+                        <span>₹{{ reservation.totalAmount }}</span>
                     </div>
                     <div class="flex justify-between items-center text-sm font-medium">
                         <span class="text-muted-foreground">New Total Amount:</span>
-                        <span>\${{ modificationCheckResult.newTotalAmount }}</span>
+                        <span>₹{{ modificationCheckResult.newTotalAmount }}</span>
                     </div>
                     
                     <div class="h-px bg-border my-2"></div>
@@ -83,7 +84,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                         <span>Difference:</span>
                         <span>
                             {{ modificationCheckResult.isPriceIncreased ? '+' : '' }}
-                            \${{ modificationCheckResult.priceDifference }}
+                            ₹{{ modificationCheckResult.priceDifference }}
                         </span>
                     </div>
 
@@ -129,7 +130,8 @@ export class ModifyBookingComponent implements OnInit {
         private router: Router,
         private bookingService: BookingService,
         private fb: FormBuilder,
-        private datePipe: DatePipe
+        private datePipe: DatePipe,
+        private toastService: ToastService
     ) {
         const today = new Date();
         this.minDate = this.datePipe.transform(today, 'yyyy-MM-dd') || '';
@@ -244,7 +246,7 @@ export class ModifyBookingComponent implements OnInit {
                 if (this.modificationCheckResult.isPriceIncreased) {
                     this.router.navigate(['/customer/payment', this.reservationId], { queryParams: { isModification: true } });
                 } else {
-                    alert('Your booking has been successfully modified.');
+                    this.toastService.success('Your booking has been successfully modified.');
                     this.router.navigate(['/customer/history']);
                 }
                 this.isSubmitting = false;

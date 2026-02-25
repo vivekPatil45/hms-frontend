@@ -6,6 +6,7 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { AdminBillService } from '../../../core/services/admin-bill.service';
 import { finalize } from 'rxjs/operators';
 import { AdminBillModalComponent } from './admin-bill-modal.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-admin-bills',
@@ -157,7 +158,7 @@ import { AdminBillModalComponent } from './admin-bill-modal.component';
                     <td class="py-3 px-4 font-medium text-foreground">#{{ bill.billId }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ bill.reservation?.reservationId }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ bill.customer?.user?.fullName }}</td>
-                    <td class="py-3 px-4 text-sm font-medium text-foreground">\${{ bill.totalAmount | number:'1.2-2' }}</td>
+                    <td class="py-3 px-4 text-sm font-medium text-foreground">₹{{ bill.totalAmount | number:'1.2-2' }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">{{ bill.paymentMethod || 'N/A' }}</td>
                     <td class="py-3 px-4 text-sm text-foreground">
                       {{ bill.billDate | date:'shortDate' }}
@@ -265,7 +266,7 @@ export class AdminBillsComponent implements OnInit {
 
   Math = Math;
 
-  constructor(private adminBillService: AdminBillService) { }
+  constructor(private adminBillService: AdminBillService, private toastService: ToastService) { }
 
   ngOnInit() {
     this.loadBills();
@@ -380,14 +381,15 @@ export class AdminBillsComponent implements OnInit {
         next: (res) => {
           this.isLoading = false;
           if (res.success) {
+            this.toastService.success(`Bill #${bill.billId} marked as PAID.`);
             this.loadBills();
           } else {
-            alert(res.message || 'Failed to mark as paid');
+            this.toastService.error(res.message || 'Failed to mark as paid');
           }
         },
         error: (err) => {
           this.isLoading = false;
-          alert(err.error?.message || 'Failed to mark as paid');
+          this.toastService.error(err.error?.message || 'Failed to mark as paid');
         }
       });
     }

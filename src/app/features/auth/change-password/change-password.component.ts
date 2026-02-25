@@ -7,15 +7,15 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
-    selector: 'app-change-password',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        ButtonComponent,
-        LoadingSpinnerComponent
-    ],
-    template: `
+  selector: 'app-change-password',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ButtonComponent,
+    LoadingSpinnerComponent
+  ],
+  template: `
     <div class="animate-fade-in">
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-foreground">Change Password</h2>
@@ -102,97 +102,99 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
           }
         </div>
 
-        <app-button 
-          type="submit" 
-          [disabled]="changePasswordForm.invalid || isLoading"
-          className="w-full h-11"
-          size="lg"
-        >
-          @if (isLoading) {
-            <app-loading-spinner size="sm" class="mr-2"></app-loading-spinner>
-            Updating Password...
-          } @else {
-            Update Password
-          }
-        </app-button>
+        <div class="mt-4">
+          <app-button 
+            type="submit" 
+            [disabled]="changePasswordForm.invalid || isLoading"
+            className="w-full h-11"
+            size="lg"
+          >
+            @if (isLoading) {
+              <app-loading-spinner size="sm" class="mr-2"></app-loading-spinner>
+              Updating Password...
+            } @else {
+              Update Password
+            }
+          </app-button>
+        </div>
       </form>
     </div>
   `
 })
 export class ChangePasswordComponent {
-    changePasswordForm: FormGroup;
-    isLoading = false;
-    error = '';
-    successMessage = '';
+  changePasswordForm: FormGroup;
+  isLoading = false;
+  error = '';
+  successMessage = '';
 
-    constructor(
-        private fb: FormBuilder,
-        private authService: AuthService,
-        private router: Router
-    ) {
-        this.changePasswordForm = this.fb.group({
-            currentPassword: ['', Validators.required],
-            newPassword: ['', [
-                Validators.required,
-                Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
-            ]],
-            confirmNewPassword: ['', Validators.required]
-        }, { validators: this.passwordMatchValidator });
-    }
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.changePasswordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [
+        Validators.required,
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+      ]],
+      confirmNewPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+  }
 
-    passwordMatchValidator(g: FormGroup) {
-        return g.get('newPassword')?.value === g.get('confirmNewPassword')?.value
-            ? null : { mismatch: true };
-    }
+  passwordMatchValidator(g: FormGroup) {
+    return g.get('newPassword')?.value === g.get('confirmNewPassword')?.value
+      ? null : { mismatch: true };
+  }
 
-    onSubmit() {
-        if (this.changePasswordForm.valid) {
-            this.isLoading = true;
-            this.error = '';
-            this.successMessage = '';
+  onSubmit() {
+    if (this.changePasswordForm.valid) {
+      this.isLoading = true;
+      this.error = '';
+      this.successMessage = '';
 
-            const { currentPassword, newPassword, confirmNewPassword } = this.changePasswordForm.value;
+      const { currentPassword, newPassword, confirmNewPassword } = this.changePasswordForm.value;
 
-            this.authService.changePassword({
-                currentPassword,
-                newPassword,
-                confirmNewPassword
-            }).subscribe({
-                next: (response) => {
-                    this.isLoading = false;
-                    if (response.success) {
-                        this.successMessage = 'Password updated successfully. Redirecting...';
+      this.authService.changePassword({
+        currentPassword,
+        newPassword,
+        confirmNewPassword
+      }).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          if (response.success) {
+            this.successMessage = 'Password updated successfully. Redirecting...';
 
-                        // Update local user state
-                        this.authService.updateSession({ requirePasswordChange: false });
+            // Update local user state
+            this.authService.updateSession({ requirePasswordChange: false });
 
-                        setTimeout(() => {
-                            const user = this.authService.getCurrentUser();
-                            if (user) {
-                                switch (user.role) {
-                                    case 'CUSTOMER':
-                                        this.router.navigate(['/customer/home']);
-                                        break;
-                                    case 'ADMIN':
-                                        this.router.navigate(['/admin/dashboard']);
-                                        break;
-                                    case 'STAFF':
-                                        this.router.navigate(['/staff/complaints']);
-                                        break;
-                                    default:
-                                        this.router.navigate(['/']);
-                                }
-                            }
-                        }, 1500);
-                    }
-                },
-                error: (err) => {
-                    this.isLoading = false;
-                    this.error = err.error?.message || 'Failed to update password';
+            setTimeout(() => {
+              const user = this.authService.getCurrentUser();
+              if (user) {
+                switch (user.role) {
+                  case 'CUSTOMER':
+                    this.router.navigate(['/customer/home']);
+                    break;
+                  case 'ADMIN':
+                    this.router.navigate(['/admin/dashboard']);
+                    break;
+                  case 'STAFF':
+                    this.router.navigate(['/staff/complaints']);
+                    break;
+                  default:
+                    this.router.navigate(['/']);
                 }
-            });
-        } else {
-            this.changePasswordForm.markAllAsTouched();
+              }
+            }, 1500);
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.error = err.error?.message || 'Failed to update password';
         }
+      });
+    } else {
+      this.changePasswordForm.markAllAsTouched();
     }
+  }
 }

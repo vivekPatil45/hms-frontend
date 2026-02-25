@@ -9,15 +9,15 @@ import { AdminReservationService, AdminCreateReservationData } from '../../../co
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
-    selector: 'app-admin-create-reservation-modal',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        ModalComponent,
-        ButtonComponent
-    ],
-    template: `
+  selector: 'app-admin-create-reservation-modal',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ModalComponent,
+    ButtonComponent
+  ],
+  template: `
     <app-modal
       [isOpen]="isOpen"
       [title]="showSuccessScreen ? 'Reservation Created!' : 'Create New Reservation'"
@@ -89,7 +89,7 @@ import { ToastService } from '../../../core/services/toast.service';
               >
                 <option value="" disabled>Select Room</option>
                 @for (room of availableRooms; track room.roomId) {
-                    <option [value]="room.roomId">Room {{ room.roomNumber }} - {{ room.roomType }} (\${{ room.pricePerNight }}/night, Max: {{ room.maxOccupancy }})</option>
+                    <option [value]="room.roomId">Room {{ room.roomNumber }} - {{ room.roomType }} (₹{{ room.pricePerNight }}/night, Max: {{ room.maxOccupancy }})</option>
                 }
               </select>
             </div>
@@ -183,107 +183,107 @@ import { ToastService } from '../../../core/services/toast.service';
   `
 })
 export class AdminCreateReservationModalComponent implements OnInit {
-    @Input() isOpen = false;
-    @Output() close = new EventEmitter<void>();
-    @Output() saved = new EventEmitter<void>();
+  @Input() isOpen = false;
+  @Output() close = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
 
-    reservationForm: FormGroup;
-    availableRooms: Room[] = [];
+  reservationForm: FormGroup;
+  availableRooms: Room[] = [];
 
-    isSubmitting = false;
-    submitError = '';
-    showSuccessScreen = false;
-    createdReservationDetails: any = null;
-    minDate: string;
+  isSubmitting = false;
+  submitError = '';
+  showSuccessScreen = false;
+  createdReservationDetails: any = null;
+  minDate: string;
 
-    constructor(
-        private fb: FormBuilder,
-        private adminRoomService: AdminRoomService,
-        private adminReservationService: AdminReservationService,
-        private toastService: ToastService
-    ) {
-        const today = new Date();
-        this.minDate = today.toISOString().split('T')[0];
+  constructor(
+    private fb: FormBuilder,
+    private adminRoomService: AdminRoomService,
+    private adminReservationService: AdminReservationService,
+    private toastService: ToastService
+  ) {
+    const today = new Date();
+    this.minDate = today.toISOString().split('T')[0];
 
-        this.reservationForm = this.fb.group({
-            customerName: ['', Validators.required],
-            customerEmail: ['', [Validators.required, Validators.email]],
-            customerPhone: [''],
-            roomId: ['', Validators.required],
-            checkInDate: ['', Validators.required],
-            checkOutDate: ['', Validators.required],
-            numberOfAdults: [1, [Validators.required, Validators.min(1)]],
-            numberOfChildren: [0, Validators.min(0)],
-            paymentMethod: ['CREDIT_CARD'],
-            specialRequests: ['']
-        });
-    }
+    this.reservationForm = this.fb.group({
+      customerName: ['', Validators.required],
+      customerEmail: ['', [Validators.required, Validators.email]],
+      customerPhone: [''],
+      roomId: ['', Validators.required],
+      checkInDate: ['', Validators.required],
+      checkOutDate: ['', Validators.required],
+      numberOfAdults: [1, [Validators.required, Validators.min(1)]],
+      numberOfChildren: [0, Validators.min(0)],
+      paymentMethod: ['CREDIT_CARD'],
+      specialRequests: ['']
+    });
+  }
 
-    ngOnInit() {
-        this.loadAvailableRooms();
-    }
+  ngOnInit() {
+    this.loadAvailableRooms();
+  }
 
-    get f() {
-        return this.reservationForm.controls;
-    }
+  get f() {
+    return this.reservationForm.controls;
+  }
 
-    loadAvailableRooms() {
-        // Specifically fetch active, available rooms initially
-        this.adminRoomService.getRooms({ availability: true, sortBy: 'roomNumber', sortOrder: 'asc' }, 0, 100).subscribe({
-            next: (response) => {
-                if (response.success && response.data) {
-                    this.availableRooms = response.data.content;
-                }
-            }
-        });
-
-        // You could also hook up date changes to refilter availableRooms based on checkInDate here
-    }
-
-    resetForm() {
-        this.showSuccessScreen = false;
-        this.createdReservationDetails = null;
-        this.submitError = '';
-        this.reservationForm.reset({
-            numberOfAdults: 1,
-            numberOfChildren: 0,
-            paymentMethod: 'CREDIT_CARD'
-        });
-    }
-
-    onSubmit() {
-        if (this.reservationForm.invalid) {
-            Object.keys(this.reservationForm.controls).forEach(key => {
-                this.reservationForm.get(key)?.markAsTouched();
-            });
-            return;
+  loadAvailableRooms() {
+    // Specifically fetch active, available rooms initially
+    this.adminRoomService.getRooms({ availability: true, sortBy: 'roomNumber', sortOrder: 'asc' }, 0, 100).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableRooms = response.data.content;
         }
+      }
+    });
 
-        this.isSubmitting = true;
-        this.submitError = '';
+    // You could also hook up date changes to refilter availableRooms based on checkInDate here
+  }
 
-        const payload: AdminCreateReservationData = this.reservationForm.value;
+  resetForm() {
+    this.showSuccessScreen = false;
+    this.createdReservationDetails = null;
+    this.submitError = '';
+    this.reservationForm.reset({
+      numberOfAdults: 1,
+      numberOfChildren: 0,
+      paymentMethod: 'CREDIT_CARD'
+    });
+  }
 
-        this.adminReservationService.createReservation(payload).subscribe({
-            next: (response) => {
-                this.isSubmitting = false;
-                if (response.success) {
-                    this.toastService.success('Reservation created successfully.');
-                    this.createdReservationDetails = response.data;
-                    this.showSuccessScreen = true;
-                    this.saved.emit();
-                }
-            },
-            error: (error) => {
-                this.isSubmitting = false;
-                this.submitError = error.error?.message || 'Failed to create reservation.';
-                this.toastService.error(this.submitError);
-            }
-        });
+  onSubmit() {
+    if (this.reservationForm.invalid) {
+      Object.keys(this.reservationForm.controls).forEach(key => {
+        this.reservationForm.get(key)?.markAsTouched();
+      });
+      return;
     }
 
-    onClose() {
-        this.resetForm();
-        this.close.emit();
-    }
+    this.isSubmitting = true;
+    this.submitError = '';
+
+    const payload: AdminCreateReservationData = this.reservationForm.value;
+
+    this.adminReservationService.createReservation(payload).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        if (response.success) {
+          this.toastService.success('Reservation created successfully.');
+          this.createdReservationDetails = response.data;
+          this.showSuccessScreen = true;
+          this.saved.emit();
+        }
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        this.submitError = error.error?.message || 'Failed to create reservation.';
+        this.toastService.error(this.submitError);
+      }
+    });
+  }
+
+  onClose() {
+    this.resetForm();
+    this.close.emit();
+  }
 }

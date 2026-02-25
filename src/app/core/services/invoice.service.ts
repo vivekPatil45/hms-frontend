@@ -22,8 +22,8 @@ export class InvoiceService {
 
         doc.setFontSize(12);
         doc.setTextColor(100, 100, 100);
-        doc.text('123 Luxury Avenue, Paradise City', pageWidth / 2, 28, { align: 'center' });
-        doc.text('support@grandhotel.com | +1 (555) 123-4567', pageWidth / 2, 34, { align: 'center' });
+        doc.text('12, Koregaon Park Road, Pune, Maharashtra 411001', pageWidth / 2, 28, { align: 'center' });
+        doc.text('support@grandhotel.com | +91 98765 43210', pageWidth / 2, 34, { align: 'center' });
 
         doc.setDrawColor(200, 200, 200);
         doc.line(10, 40, pageWidth - 10, 40);
@@ -70,10 +70,10 @@ export class InvoiceService {
             body: [
                 ['Room Type', reservation.room?.roomType || 'Standard', ''],
                 ['Stay Duration', `${checkIn} to ${checkOut} (${reservation.numberOfNights} nights)`, ''],
-                ['Base Price', `${reservation.numberOfNights} nights x $${reservation.baseAmount ? (reservation.baseAmount / reservation.numberOfNights).toFixed(2) : '0.00'}`, `$${reservation.baseAmount}`],
-                ['Taxes & Fees', 'GST & Service Charges', `$${reservation.taxAmount}`],
-                ['Discount', 'Promo Applied', `-$${reservation.discountAmount || 0}`],
-                [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, '', { content: `$${reservation.totalAmount}`, styles: { fontStyle: 'bold' } }],
+                ['Base Price', `${reservation.numberOfNights} nights x ₹${reservation.baseAmount ? (reservation.baseAmount / reservation.numberOfNights).toFixed(2) : '0.00'}`, `₹${reservation.baseAmount}`],
+                ['Taxes & Fees', 'GST & Service Charges', `₹${reservation.taxAmount}`],
+                ['Discount', 'Promo Applied', `-₹${reservation.discountAmount || 0}`],
+                [{ content: 'Total Amount', styles: { fontStyle: 'bold' } }, '', { content: `₹${reservation.totalAmount}`, styles: { fontStyle: 'bold' } }],
             ],
             theme: 'grid',
             headStyles: { fillColor: [63, 81, 181] },

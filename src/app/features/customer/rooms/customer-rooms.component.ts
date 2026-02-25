@@ -172,71 +172,65 @@ import { RoomService, RoomSearchCriteria } from '../../../core/services/room.ser
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (room of rooms; track room.roomId) {
-            <div class="bg-card rounded-xl border border-border overflow-hidden card-hover group">
+            <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
               <!-- Room Image -->
-              <div class="h-48 bg-muted flex items-center justify-center relative group-hover:scale-105 transition-transform duration-300">
+              <div class="h-56 bg-muted overflow-hidden">
                 @if (room.images && room.images.length > 0) {
-                     <img [src]="room.images[0]" alt="Room Image" class="w-full h-full object-cover">
+                     <img [src]="room.images[0]" alt="Room Image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                 } @else {
-                    <div class="text-center text-muted-foreground">
-                      <svg class="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <p class="text-sm font-medium">Room {{ room.roomNumber }}</p>
-                    </div>
+                    <img [src]="getRandomRoomImage(room.roomNumber)" alt="Default Room Image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                 }
-                
-                <div class="absolute top-4 right-4">
-                    <app-status-badge [status]="'AVAILABLE'"></app-status-badge>
-                </div>
               </div>
 
               <!-- Room Details -->
-              <div class="p-5 relative bg-card">
-                <div class="mb-4">
-                  <div class="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 class="font-semibold text-lg text-foreground">{{ room.roomType }} Room</h3>
-                      <p class="text-xs text-muted-foreground">Floor {{ room.floor }} • Room {{ room.roomNumber }}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xl font-bold text-primary">\${{ room.pricePerNight }}</span>
-                        <span class="text-xs text-muted-foreground block">/night</span>
-                    </div>
-                  </div>
-                  
-                  <p class="text-sm text-muted-foreground mt-3 mb-4 line-clamp-2">
-                    {{ room.description }}
-                  </p>
-
-                  <div class="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span>Up to {{ room.maxOccupancy }} guests</span>
-                     <span class="mx-2">•</span>
-                    <span>{{ room.roomSize }} sq ft</span>
+              <div class="p-6">
+                <!-- Header: Type & Status -->
+                <div class="flex justify-between items-center mb-1">
+                  <h3 class="text-xl font-bold text-foreground">{{ room.roomType }} Room</h3>
+                  <div class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+                    AVAILABLE
                   </div>
                 </div>
+
+                <!-- Sub-info -->
+                <p class="text-sm text-muted-foreground mb-3">
+                  Floor {{ room.floor }} • Room {{ room.roomNumber }}
+                </p>
+
+                <!-- Description -->
+                <p class="text-sm text-foreground/80 mb-4 line-clamp-2 min-h-[40px]">
+                  {{ room.description }}
+                </p>
 
                 <!-- Amenities -->
                 <div class="flex flex-wrap gap-2 mb-6">
-                  @for (amenity of room.amenities.slice(0, 4); track amenity) {
-                    <span class="inline-flex items-center px-2 py-1 bg-secondary/50 rounded text-[10px] font-medium text-secondary-foreground">
-                      <svg class="h-3 w-3 mr-1 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
+                  @for (amenity of room.amenities.slice(0, 3); track amenity) {
+                    <span class="inline-flex items-center text-[10px] bg-secondary/30 text-secondary-foreground px-2 py-0.5 rounded border border-border/50">
                       {{ amenity }}
                     </span>
                   }
+                  @if (room.amenities.length > 3) {
+                    <span class="text-[10px] text-muted-foreground self-center">+{{ room.amenities.length - 3 }} more</span>
+                  }
                 </div>
 
-                <app-button 
-                    class="w-full"
+                <!-- Divider -->
+                <div class="h-px bg-border/60 mb-6"></div>
+
+                <!-- Bottom Row: Price & Action -->
+                <div class="flex justify-between items-center">
+                  <div class="flex items-baseline">
+                    <span class="text-2xl font-bold text-foreground">₹{{ room.pricePerNight }}</span>
+                    <span class="text-sm text-muted-foreground ml-1">/night</span>
+                  </div>
+                  <app-button 
+                    size="sm" 
+                    class="rounded-lg font-bold px-6 py-2 h-auto"
                     (click)="bookRoom(room)"
-                >
-                  Book Now
-                </app-button>
+                  >
+                    Book Now
+                  </app-button>
+                </div>
               </div>
             </div>
           }
@@ -324,6 +318,16 @@ export class CustomerRoomsComponent implements OnInit {
   }
 
   handleSearch() {
+    // Frontend validation: check-out must be after check-in
+    if (this.searchFilters.checkInDate && this.searchFilters.checkOutDate) {
+      const checkIn = new Date(this.searchFilters.checkInDate);
+      const checkOut = new Date(this.searchFilters.checkOutDate);
+      if (checkOut <= checkIn) {
+        this.errorMessage = 'Check-out date must be after the check-in date.';
+        return;
+      }
+    }
+    this.errorMessage = '';
     // Update URL parameters which will trigger fetchRooms via subscription
     this.router.navigate([], {
       relativeTo: this.route,
@@ -358,7 +362,8 @@ export class CustomerRoomsComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error fetching rooms:', error);
-        this.errorMessage = error.message || 'Failed to search rooms. Please try again.';
+        // Extract backend message from the error response body
+        this.errorMessage = error.error?.message || error.message || 'Failed to search rooms. Please try again.';
         this.isLoading = false;
       }
     });
@@ -373,5 +378,16 @@ export class CustomerRoomsComponent implements OnInit {
         children: this.searchFilters.numberOfChildren
       }
     });
+  }
+
+  getRandomRoomImage(roomNumber: string): string {
+    const images = ['room1.png', 'room2.png', 'room3.png', 'room4.png', 'room5.png'];
+    // Use the room number string to generate a consistent index
+    let hash = 0;
+    for (let i = 0; i < roomNumber.length; i++) {
+      hash = roomNumber.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % images.length;
+    return `assets/${images[index]}`;
   }
 }

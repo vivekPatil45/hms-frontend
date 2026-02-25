@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { RoomService } from '../../../core/services/room.service';
+import { Room } from '../../../models/room.model';
 
 @Component({
   selector: 'app-customer-home',
@@ -187,39 +189,58 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
         } @else {
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @for (room of featuredRooms; track room.id) {
-              <div class="bg-card rounded-xl border border-border overflow-hidden card-hover">
-                <!-- Room Image Placeholder -->
-                <div class="h-48 bg-muted flex items-center justify-center">
-                  <div class="text-center text-muted-foreground">
-                    <svg class="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    <p class="text-sm">Room {{ room.number }}</p>
-                  </div>
+            @for (room of featuredRooms; track room.roomId) {
+              <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group cursor-pointer" (click)="viewRoom(room)">
+                <!-- Room Image -->
+                <div class="h-48 bg-muted overflow-hidden">
+                  @if (room.images && room.images.length > 0) {
+                    <img [src]="room.images[0]" alt="Room Image" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                  } @else {
+                    <img [src]="getRandomRoomImage(room.roomNumber)" alt="Featured Room" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                  }
                 </div>
 
                 <!-- Room Details -->
-                <div class="p-5">
-                  <div class="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 class="font-semibold text-foreground">{{ room.type }} Room</h3>
-                      <p class="text-sm text-muted-foreground">Floor {{ room.floor }} • Room {{ room.number }}</p>
+                <div class="p-6">
+                  <!-- Header: Type & Status -->
+                  <div class="flex justify-between items-center mb-1">
+                    <h3 class="text-lg font-bold text-foreground">{{ room.roomType }} Room</h3>
+                    <div class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider">
+                      AVAILABLE
                     </div>
-                    <app-status-badge [status]="room.status"></app-status-badge>
                   </div>
 
-                  <p class="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  <!-- Sub-info -->
+                  <p class="text-xs text-muted-foreground mb-3">
+                    Floor {{ room.floor }} • Room {{ room.roomNumber }}
+                  </p>
+
+                  <!-- Description -->
+                  <p class="text-sm text-foreground/80 mb-4 line-clamp-2 min-h-[40px]">
                     {{ room.description }}
                   </p>
 
-                  <!-- Price & CTA -->
-                  <div class="flex items-center justify-between pt-4 border-t border-border">
-                    <div>
-                      <span class="text-2xl font-bold text-foreground">\${{ room.pricePerNight }}</span>
-                      <span class="text-sm text-muted-foreground">/night</span>
+                  <!-- Amenities -->
+                  <div class="flex flex-wrap gap-2 mb-6">
+                    @for (amenity of room.amenities.slice(0, 3); track amenity) {
+                      <span class="inline-flex items-center text-[10px] bg-secondary/30 text-secondary-foreground px-2 py-0.5 rounded border border-border/50">
+                        {{ amenity }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="h-px bg-border/60 mb-6"></div>
+
+                  <!-- Price & Action -->
+                  <div class="flex justify-between items-center">
+                    <div class="flex items-baseline">
+                      <span class="text-xl font-bold text-foreground">₹{{ room.pricePerNight }}</span>
+                      <span class="text-xs text-muted-foreground ml-1">/night</span>
                     </div>
-                    <app-button size="sm">Book Now</app-button>
+                    <app-button size="sm" class="rounded-lg font-bold px-4 py-1.5 h-auto">
+                      Book Now
+                    </app-button>
                   </div>
                 </div>
               </div>
@@ -281,11 +302,12 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class CustomerHomeComponent {
+export class CustomerHomeComponent implements OnInit {
   isLoading = false;
   currentUser$ = this.authService.currentUser$;
   minDate = new Date().toISOString().split('T')[0];
   errorMessage = '';
+  featuredRooms: Room[] = [];
 
   searchCriteria = {
     checkInDate: '',
@@ -297,8 +319,38 @@ export class CustomerHomeComponent {
 
   constructor(
     private authService: AuthService,
+    private roomService: RoomService,
     private router: Router
   ) { }
+
+  ngOnInit() {
+    this.loadFeaturedRooms();
+  }
+
+  loadFeaturedRooms() {
+    this.isLoading = true;
+    // Empty criteria to just get latest available rooms
+    const criteria = {
+      checkInDate: this.minDate,
+      checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // tomorrow
+      numberOfAdults: 1,
+      numberOfChildren: 0,
+      roomType: 'STANDARD' // Default search to show something
+    };
+
+    this.roomService.searchRooms(criteria, 0, 3).subscribe({
+      next: (response: any) => {
+        if (response && response.data) {
+          this.featuredRooms = response.data.content || [];
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading featured rooms:', error);
+        this.isLoading = false;
+      }
+    });
+  }
 
   validateDates() {
     this.errorMessage = '';
@@ -340,33 +392,23 @@ export class CustomerHomeComponent {
     }
   }
 
-  featuredRooms = [
-    {
-      id: 1,
-      number: '101',
-      type: 'DELUXE',
-      floor: 1,
-      pricePerNight: 250,
-      status: 'AVAILABLE' as const,
-      description: 'Spacious deluxe room with king-size bed, modern amenities, and stunning city views.'
-    },
-    {
-      id: 2,
-      number: '205',
-      type: 'SUITE',
-      floor: 2,
-      pricePerNight: 450,
-      status: 'AVAILABLE' as const,
-      description: 'Luxurious suite featuring separate living area, premium furnishings, and panoramic views.'
-    },
-    {
-      id: 3,
-      number: '301',
-      type: 'PRESIDENTIAL',
-      floor: 3,
-      pricePerNight: 850,
-      status: 'AVAILABLE' as const,
-      description: 'Our finest accommodation with exclusive amenities, private terrace, and personalized service.'
+  viewRoom(room: Room) {
+    this.router.navigate(['/customer/rooms'], {
+      queryParams: {
+        type: room.roomType,
+        checkIn: this.minDate,
+        checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0]
+      }
+    });
+  }
+
+  getRandomRoomImage(roomNumber: string): string {
+    const images = ['room1.png', 'room2.png', 'room3.png', 'room4.png', 'room5.png'];
+    let hash = 0;
+    for (let i = 0; i < roomNumber.length; i++) {
+      hash = roomNumber.charCodeAt(i) + ((hash << 5) - hash);
     }
-  ];
+    const index = Math.abs(hash) % images.length;
+    return `assets/${images[index]}`;
+  }
 }

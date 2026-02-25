@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { BookingService } from '../../../core/services/booking.service';
 import { Reservation } from '../../../models/reservation.model';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
     selector: 'app-cancel-booking-modal',
@@ -41,11 +42,11 @@ import { Reservation } from '../../../models/reservation.model';
                         <div class="mt-4 space-y-2 text-sm">
                             <div class="flex justify-between items-center pb-2 border-b border-border/50">
                                 <span class="text-muted-foreground">Total Booking Amount</span>
-                                <span>\${{ cancellationDetails.totalAmount }}</span>
+                                <span>₹{{ cancellationDetails.totalAmount }}</span>
                             </div>
                             <div class="flex justify-between items-center font-bold text-lg pt-2" [class.text-green-600]="cancellationDetails.refundAmount > 0">
                                 <span>Refund Amount</span>
-                                <span>\${{ cancellationDetails.refundAmount }}</span>
+                                <span>₹{{ cancellationDetails.refundAmount }}</span>
                             </div>
                         </div>
                     }
@@ -86,7 +87,7 @@ export class CancelBookingModalComponent implements OnInit {
     error = '';
     cancellationDetails: any = null;
 
-    constructor(private bookingService: BookingService) { }
+    constructor(private bookingService: BookingService, private toastService: ToastService) { }
 
     ngOnInit(): void {
         if (this.isOpen && this.reservation) {
@@ -127,9 +128,9 @@ export class CancelBookingModalComponent implements OnInit {
                 this.isCancelling = false;
                 let successMsg = 'Your booking has been canceled.';
                 if (this.cancellationDetails?.refundAmount > 0) {
-                    successMsg += ` A refund of $${this.cancellationDetails.refundAmount} will be processed within 3-5 business days.`;
+                    successMsg += ` A refund of ₹${this.cancellationDetails.refundAmount} will be processed within 3-5 business days.`;
                 }
-                alert(successMsg);
+                this.toastService.success(successMsg);
                 this.modalClosed.emit(true); // emit true on success
             },
             error: (err) => {

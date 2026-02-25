@@ -8,6 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Room } from '../../../models/room.model';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-booking-confirmation',
@@ -31,6 +32,8 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
               <div class="flex flex-col md:flex-row gap-4">
                 @if (room.images && room.images.length > 0) {
                   <img [src]="room.images[0]" alt="Room" class="w-full md:w-48 h-32 object-cover rounded-md">
+                } @else {
+                  <img [src]="getRandomRoomImage(room.roomNumber)" alt="Room" class="w-full md:w-48 h-32 object-cover rounded-md">
                 }
                 <div>
                   <h3 class="font-medium text-lg text-primary">{{ room.roomType }} Room</h3>
@@ -48,17 +51,17 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
             <!-- Customer Details -->
             <div class="bg-card rounded-xl border border-border p-6 shadow-sm">
               <h2 class="text-xl font-semibold mb-4 text-foreground">Guest Details</h2>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                <div>
-                  <p class="text-muted-foreground mb-1">Name</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                <div class="space-y-1">
+                  <p class="text-muted-foreground">Name</p>
                   <p class="font-medium text-foreground text-base">{{ user?.fullName || 'N/A' }}</p>
                 </div>
-                <div>
-                  <p class="text-muted-foreground mb-1">Email</p>
-                  <p class="font-medium text-foreground text-base">{{ user?.email || 'N/A' }}</p>
+                <div class="space-y-1 overflow-hidden">
+                  <p class="text-muted-foreground">Email</p>
+                  <p class="font-medium text-foreground text-base truncate" [title]="user?.email || ''">{{ user?.email || 'N/A' }}</p>
                 </div>
-                <div>
-                  <p class="text-muted-foreground mb-1">Phone</p>
+                <div class="space-y-1">
+                  <p class="text-muted-foreground">Phone</p>
                   <p class="font-medium text-foreground text-base">{{ user?.mobileNumber || 'N/A' }}</p>
                 </div>
               </div>
@@ -102,20 +105,20 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
                   <span class="text-muted-foreground">Base Price (x{{numberOfNights}})</span>
-                  <span class="text-foreground">\${{ basePrice }}</span>
+                  <span class="text-foreground">₹{{ basePrice }}</span>
                 </div>
                  <div class="flex justify-between">
                   <span class="text-muted-foreground">Taxes (12%)</span>
-                  <span class="text-foreground">\${{ taxAmount }}</span>
+                  <span class="text-foreground">₹{{ taxAmount }}</span>
                 </div>
                 <div class="flex justify-between pt-4 border-t border-border">
                   <span class="text-lg font-bold text-foreground">Total</span>
-                  <span class="text-lg font-bold text-primary">\${{ totalAmount }}</span>
+                  <span class="text-lg font-bold text-primary">₹{{ totalAmount }}</span>
                 </div>
               </div>
 
               <app-button 
-                class="w-full mt-6" 
+                [className]="'w-full mt-6'" 
                 (click)="proceedToPayment()"
                 [disabled]="isProcessing"
               >
@@ -162,7 +165,8 @@ export class BookingConfirmationComponent implements OnInit {
     private router: Router,
     private roomService: RoomService,
     private bookingService: BookingService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit() {
@@ -235,7 +239,7 @@ export class BookingConfirmationComponent implements OnInit {
       },
       error: (err) => {
         console.error('Booking failed', err);
-        alert('Failed to initiate booking. Please try again.');
+        this.toastService.error(err.error?.message || 'Failed to initiate booking. Please try again.');
         this.isProcessing = false;
       }
     });
@@ -243,5 +247,15 @@ export class BookingConfirmationComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/customer/rooms']);
+  }
+
+  getRandomRoomImage(roomNumber: string): string {
+    const images = ['room1.png', 'room2.png', 'room3.png', 'room4.png', 'room5.png'];
+    let hash = 0;
+    for (let i = 0; i < roomNumber.length; i++) {
+      hash = roomNumber.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % images.length;
+    return `assets/${images[index]}`;
   }
 }

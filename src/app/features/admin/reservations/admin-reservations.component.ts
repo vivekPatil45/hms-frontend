@@ -145,7 +145,7 @@ import { AdminEditReservationModalComponent } from './admin-edit-reservation-mod
                         <div class="truncate">{{ reservation.checkInDate | date:'MMM d' }} - {{ reservation.checkOutDate | date:'MMM d, y' }}</div>
                         <div class="text-xs text-muted-foreground">{{ reservation.numberOfNights }} Nights</div>
                     </td>
-                    <td class="py-3 px-4 text-sm font-medium text-foreground">\${{ reservation.totalAmount }}</td>
+                    <td class="py-3 px-4 text-sm font-medium text-foreground">₹{{ reservation.totalAmount }}</td>
                     <td class="py-3 px-4">
                       <app-status-badge [status]="reservation.status"></app-status-badge>
                     </td>

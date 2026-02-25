@@ -8,6 +8,7 @@ import { BookingService } from '../../../core/services/booking.service';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { CancelBookingModalComponent } from './cancel-booking-modal.component';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-customer-history',
@@ -65,12 +66,12 @@ import { CancelBookingModalComponent } from './cancel-booking-modal.component';
             <table class="w-full">
                 <thead>
                 <tr class="bg-muted/50 border-b border-border">
-                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Booking ID</th>
-                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Hotel & Room</th>
-                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Dates</th>
-                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Status</th>
-                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm">Amount</th>
-                    <th class="text-right py-3 px-4 font-medium text-muted-foreground text-sm">Actions</th>
+                 <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Booking ID</th>
+                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Hotel &amp; Room</th>
+                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Dates</th>
+                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Status</th>
+                    <th class="text-left py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Amount</th>
+                    <th class="text-center py-3 px-4 font-medium text-muted-foreground text-sm whitespace-nowrap">Actions</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -87,8 +88,8 @@ import { CancelBookingModalComponent } from './cancel-booking-modal.component';
                         }
                     </td>
                     <td class="py-3 px-4">
-                        <div class="font-medium text-foreground">Grand Hotel, Paradise City</div>
-                        <div class="text-xs text-muted-foreground">{{ booking.room?.roomType }} (Room {{ booking.room?.roomNumber }})</div>
+                        <div class="font-medium text-foreground whitespace-nowrap">Grand Hotel, Pune</div>
+                        <div class="text-xs text-muted-foreground whitespace-nowrap">{{ booking.room?.roomType }} (Room {{ booking.room?.roomNumber }})</div>
                     </td>
                     <td class="py-3 px-4 text-sm text-foreground">
                         <div>In: {{ booking.checkInDate | date:'dd-MM-yyyy' }}</div>
@@ -101,33 +102,41 @@ import { CancelBookingModalComponent } from './cancel-booking-modal.component';
                         }
                     </td>
                     <td class="py-3 px-4 text-sm font-medium text-foreground">
-                        \${{ booking.totalAmount }}
+                        ₹{{ booking.totalAmount }}
                     </td>
-                    <td class="py-3 px-4 text-right">
+                    <td class="py-3 px-4">
                         <!-- Upcoming Actions -->
                         @if (activeTab === 'upcoming' && booking.status !== 'CANCELLED') {
-                            <app-button variant="ghost" size="sm" class="mr-2" (click)="openDetails(booking)">
-                                View Details
-                            </app-button>
-                            <app-button variant="outline" size="sm" class="mr-2" [routerLink]="['/customer/modify-booking', booking.reservationId]">
-                                Modify
-                            </app-button>
-                            <app-button variant="destructive" size="sm" class="mr-2" (click)="openCancelModal(booking)">
-                                Cancel
-                            </app-button>
-                            <app-button variant="outline" size="sm" (click)="downloadInvoiceOrWarn(booking)">
-                                Invoice
-                            </app-button>
+                            <div class="flex flex-col gap-1.5 min-w-[120px]">
+                                <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors" (click)="openDetails(booking)">
+                                    View Details
+                                </button>
+                                <div class="flex gap-1.5">
+                                    <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors" [routerLink]="['/customer/modify-booking', booking.reservationId]">
+                                        Modify
+                                    </button>
+                                    <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-destructive hover:bg-destructive/90 text-white transition-colors" (click)="openCancelModal(booking)">
+                                        Cancel
+                                    </button>
+                                </div>
+                                <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors flex items-center justify-center gap-1" (click)="downloadInvoiceOrWarn(booking)">
+                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    Invoice
+                                </button>
+                            </div>
                         } @else {
                             <!-- Past/Cancelled Actions -->
-                            <app-button variant="ghost" size="sm" class="mr-2" (click)="openDetails(booking)">
-                                View Details
-                            </app-button>
-                            @if (booking.status !== 'CANCELLED') {
-                                <app-button variant="outline" size="sm" (click)="downloadInvoiceOrWarn(booking)">
-                                    Invoice
-                                </app-button>
-                            }
+                            <div class="flex flex-col gap-1.5 min-w-[120px]">
+                                <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors" (click)="openDetails(booking)">
+                                    View Details
+                                </button>
+                                @if (booking.status !== 'CANCELLED') {
+                                    <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors flex items-center justify-center gap-1" (click)="downloadInvoiceOrWarn(booking)">
+                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        Invoice
+                                    </button>
+                                }
+                            </div>
                         }
                     </td>
                     </tr>
@@ -167,7 +176,7 @@ import { CancelBookingModalComponent } from './cancel-booking-modal.component';
                 <div>
                     <p class="text-sm text-muted-foreground">Hotel</p>
                     <p class="font-medium">Grand Hotel</p>
-                    <p class="text-sm text-muted-foreground">123 Luxury Avenue, Paradise City</p>
+                    <p class="text-sm text-muted-foreground">12, Koregaon Park Road, Pune</p>
                 </div>
                 <div>
                     <p class="text-sm text-muted-foreground">Room</p>
@@ -188,7 +197,7 @@ import { CancelBookingModalComponent } from './cancel-booking-modal.component';
                 </div>
                 <div>
                     <p class="text-sm text-muted-foreground">Total Amount</p>
-                    <p class="font-bold text-lg text-primary">\${{ selectedBooking.totalAmount }}</p>
+                    <p class="font-bold text-lg text-primary">₹{{ selectedBooking.totalAmount }}</p>
                     <p class="text-xs" [class.text-green-600]="selectedBooking.paymentStatus === 'PAID'" [class.text-amber-500]="selectedBooking.paymentStatus !== 'PAID'">
                         Payment: {{ selectedBooking.paymentStatus }}
                     </p>
@@ -236,7 +245,8 @@ export class CustomerHistoryComponent implements OnInit {
 
   constructor(
     private bookingService: BookingService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit() {
@@ -301,7 +311,7 @@ export class CustomerHistoryComponent implements OnInit {
 
   downloadInvoiceOrWarn(booking: Reservation) {
     if (booking.paymentStatus !== 'PAID') {
-      alert("Invoice will be available after full payment.");
+      this.toastService.error('Invoice will be available after full payment.');
       return;
     }
 
@@ -309,7 +319,7 @@ export class CustomerHistoryComponent implements OnInit {
       this.invoiceService.generateInvoice(booking);
     } catch (error) {
       console.error('Invoice generation failed', error);
-      alert("Unable to generate invoice. Please try again later.");
+      this.toastService.error('Unable to generate invoice. Please try again later.');
     }
   }
 
