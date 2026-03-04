@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -6,6 +6,34 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegisterData } from '../../../models/user.model';
+import { ToastService } from '../../../core/services/toast.service';
+
+// Country code rules: { digits: number | [min, max], label: string }
+const COUNTRY_RULES: Record<string, { min: number; max: number; label: string; placeholder: string }> = {
+  '+1': { min: 10, max: 10, label: 'US / Canada', placeholder: '2015550123' },
+  '+44': { min: 10, max: 10, label: 'United Kingdom', placeholder: '7911123456' },
+  '+91': { min: 10, max: 10, label: 'India', placeholder: '9876543210' },
+  '+61': { min: 9, max: 9, label: 'Australia', placeholder: '412345678' },
+  '+971': { min: 9, max: 9, label: 'UAE', placeholder: '501234567' },
+  '+65': { min: 8, max: 8, label: 'Singapore', placeholder: '81234567' },
+  '+60': { min: 9, max: 10, label: 'Malaysia', placeholder: '123456789' },
+  '+81': { min: 10, max: 11, label: 'Japan', placeholder: '09012345678' },
+  '+49': { min: 10, max: 11, label: 'Germany', placeholder: '15123456789' },
+  '+33': { min: 9, max: 9, label: 'France', placeholder: '612345678' },
+};
+
+function mobileNumberValidator(group: AbstractControl): ValidationErrors | null {
+  const code = group.get('countryCode')?.value as string;
+  const num = group.get('mobileNumber')?.value as string;
+  if (!code || !num) return null;
+  const rule = COUNTRY_RULES[code];
+  if (!rule) return null;
+  const digits = num.replace(/\D/g, '');
+  if (digits.length < rule.min || digits.length > rule.max) {
+    return { invalidMobile: true };
+  }
+  return null;
+}
 
 @Component({
   selector: 'app-register',
@@ -48,7 +76,7 @@ import { RegisterData } from '../../../models/user.model';
             type="text"
             formControlName="fullName"
             class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-            placeholder="John Doe"
+            placeholder="Full Name"
             [class.border-destructive]="isFieldInvalid('fullName')"
           />
           @if (isFieldInvalid('fullName')) {
@@ -66,7 +94,7 @@ import { RegisterData } from '../../../models/user.model';
             type="email"
             formControlName="email"
             class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-            placeholder="john.doe@example.com"
+            placeholder="user@gmail.com"
             [class.border-destructive]="isFieldInvalid('email')"
           />
           @if (isFieldInvalid('email')) {
@@ -82,24 +110,31 @@ import { RegisterData } from '../../../models/user.model';
           <div class="flex gap-3">
             <select 
                 formControlName="countryCode"
-                class="flex h-11 w-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
+                (change)="onCountryChange()"
+                class="flex h-11 w-32 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
             >
-                <option value="+1">+1 (US)</option>
+                <option value="+1">+1 (US/CA)</option>
                 <option value="+44">+44 (UK)</option>
                 <option value="+91">+91 (IN)</option>
                 <option value="+61">+61 (AU)</option>
+                <option value="+971">+971 (UAE)</option>
+                <option value="+65">+65 (SG)</option>
+                <option value="+60">+60 (MY)</option>
+                <option value="+81">+81 (JP)</option>
+                <option value="+49">+49 (DE)</option>
+                <option value="+33">+33 (FR)</option>
             </select>
             <input
                 id="mobileNumber"
                 type="tel"
                 formControlName="mobileNumber"
                 class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                placeholder="9876543210"
-                [class.border-destructive]="isFieldInvalid('mobileNumber')"
+                [placeholder]="mobilePlaceholder"
+                [class.border-destructive]="isMobileInvalid()"
             />
           </div>
-          @if (isFieldInvalid('mobileNumber')) {
-            <p class="text-sm text-destructive mt-1">{{ getErrorMessage('mobileNumber') }}</p>
+          @if (isMobileInvalid()) {
+            <p class="text-sm text-destructive mt-1">{{ getMobileErrorMessage() }}</p>
           }
         </div>
 
@@ -131,7 +166,7 @@ import { RegisterData } from '../../../models/user.model';
             type="text"
             formControlName="username"
             class="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-            placeholder="johndoe123"
+            placeholder="user123"
             [class.border-destructive]="isFieldInvalid('username')"
           />
           @if (isFieldInvalid('username')) {
@@ -212,15 +247,17 @@ import { RegisterData } from '../../../models/user.model';
     `,
   styles: []
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   isLoading = false;
   error = '';
+  mobilePlaceholder = '9876543210';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.registerForm = this.fb.group({
       fullName: ['', [
@@ -232,7 +269,7 @@ export class RegisterComponent {
       countryCode: ['+91', [Validators.required]],
       mobileNumber: ['', [
         Validators.required,
-        Validators.pattern('^[0-9]{8,10}$')
+        Validators.pattern('^[0-9]+$')   // digits only; length checked by group validator
       ]],
       address: ['', [
         Validators.required,
@@ -249,7 +286,51 @@ export class RegisterComponent {
         Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$')
       ]],
       confirmPassword: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
+    }, { validators: [this.passwordMatchValidator, mobileNumberValidator] });
+  }
+
+  ngOnInit(): void {
+    this.updatePlaceholder('+91');
+  }
+
+  onCountryChange(): void {
+    const code = this.registerForm.get('countryCode')?.value;
+    this.updatePlaceholder(code);
+    // Re-trigger validation when country changes
+    this.registerForm.get('mobileNumber')?.updateValueAndValidity();
+    this.registerForm.updateValueAndValidity();
+  }
+
+  private updatePlaceholder(code: string): void {
+    this.mobilePlaceholder = COUNTRY_RULES[code]?.placeholder ?? '123456789';
+  }
+
+  isMobileInvalid(): boolean {
+    const field = this.registerForm.get('mobileNumber');
+    const touched = field?.dirty || field?.touched;
+    const fieldErr = field?.invalid;
+    const groupErr = this.registerForm.errors?.['invalidMobile'];
+    return !!(touched && (fieldErr || groupErr));
+  }
+
+  getMobileErrorMessage(): string {
+    const field = this.registerForm.get('mobileNumber');
+    const code = this.registerForm.get('countryCode')?.value as string;
+    const rule = COUNTRY_RULES[code];
+
+    if (field?.errors?.['required']) {
+      return 'Mobile number is required.';
+    }
+    if (field?.errors?.['pattern']) {
+      return 'Please enter digits only — no spaces, dashes, or special characters.';
+    }
+    if (this.registerForm.errors?.['invalidMobile'] && rule) {
+      const range = rule.min === rule.max
+        ? `${rule.min} digits`
+        : `${rule.min}–${rule.max} digits`;
+      return `Please enter a valid ${rule.label} mobile number (${range}). Example: ${rule.placeholder}`;
+    }
+    return 'Please enter a valid mobile number.';
   }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -341,12 +422,8 @@ export class RegisterComponent {
       this.authService.register(registerData).subscribe({
         next: (response) => {
           this.isLoading = false;
-          // TODO: Navigate to acknowledgement screen
-          // For now, redirect to login with success message or implement success screen
-          console.log('Registered user:', response.data);
-          this.router.navigate(['/auth/login'], {
-            queryParams: { registered: 'true' }
-          });
+          this.toastService.success('Registration successful! Please log in to continue. 🎉');
+          this.router.navigate(['/auth/login']);
         },
         error: (err) => {
           this.isLoading = false;

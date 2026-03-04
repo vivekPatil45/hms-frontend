@@ -12,8 +12,7 @@ import { UserRole } from './models/user.model';
 export const routes: Routes = [
     {
         path: '',
-        redirectTo: 'customer/home',
-        pathMatch: 'full'
+        loadComponent: () => import('./features/landing/landing-page.component').then(m => m.LandingPageComponent)
     },
     {
         path: 'auth',
@@ -119,6 +118,10 @@ export const routes: Routes = [
             {
                 path: 'complaints',
                 loadComponent: () => import('./features/staff/complaints/staff-complaints.component').then(m => m.StaffComplaintsComponent)
+            },
+            {
+                path: 'profile',
+                loadComponent: () => import('./features/staff/profile/staff-profile.component').then(m => m.StaffProfileComponent)
             }
         ]
     },

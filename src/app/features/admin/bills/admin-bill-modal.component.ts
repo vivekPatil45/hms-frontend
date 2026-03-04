@@ -38,14 +38,7 @@ import { ToastService } from '../../../core/services/toast.service';
           <!-- View: Generate -->
           @if (view === 'generate') {
             <form #generateForm="ngForm" (ngSubmit)="generateBill(generateForm)" class="space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-foreground mb-1">Customer ID <span class="text-destructive">*</span></label>
-                  <input type="text" [(ngModel)]="customerId" name="customerId" required #custId="ngModel" class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" placeholder="Enter Customer ID">
-                  <div *ngIf="custId.invalid && custId.touched" class="text-xs text-destructive mt-1">
-                    Customer ID is required.
-                  </div>
-                </div>
+              <div class="grid grid-cols-1 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-foreground mb-1">Reservation ID <span class="text-destructive">*</span></label>
                   <input type="text" [(ngModel)]="reservationId" name="reservationId" required #resId="ngModel" class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" placeholder="Enter Reservation ID (e.g. RES-XXXX)">
@@ -163,9 +156,9 @@ import { ToastService } from '../../../core/services/toast.service';
                                <input type="number" [(ngModel)]="newItem.quantity" min="1" class="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground transition-all">
                            </div>
                            <div class="flex-1">
-                               <label class="block text-xs font-medium text-muted-foreground mb-1">Unit Price ($)</label>
+                               <label class="block text-xs font-medium text-muted-foreground mb-1">Unit Price (₹)</label>
                                <div class="relative">
-                                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
                                   <input type="number" [(ngModel)]="newItem.unitPrice" class="w-full px-3 py-2 pl-8 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground transition-all">
                                </div>
                            </div>
@@ -210,7 +203,7 @@ import { ToastService } from '../../../core/services/toast.service';
                       <span class="text-muted-foreground">Discount</span>
                       @if (bill.paymentStatus !== 'PAID') {
                           <div class="relative w-24 transform transition-transform group-focus-within:scale-105">
-                             <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">$</span>
+                             <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">₹</span>
                              <input type="number" [(ngModel)]="editableDiscount" class="w-full pl-6 pr-2 py-1 bg-background border border-border rounded-md text-xs text-right focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground" min="0">
                           </div>
                       }
@@ -253,6 +246,25 @@ import { ToastService } from '../../../core/services/toast.service';
         </div>
       </div>
     </div>
+
+    <!-- Confirm Remove Line Item Modal -->
+    <div *ngIf="isConfirmRemoveOpen" class="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4">
+      <div class="bg-card rounded-xl shadow-2xl w-full max-w-sm p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="p-2 bg-destructive/10 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-foreground">Remove Line Item</h3>
+        </div>
+        <p class="text-muted-foreground mb-6">Are you sure you want to remove this line item? This action cannot be undone.</p>
+        <div class="flex justify-end gap-3">
+          <app-button variant="outline" (click)="isConfirmRemoveOpen = false; pendingRemoveItemId = null">Cancel</app-button>
+          <app-button variant="destructive" (click)="doRemoveItem()">Remove</app-button>
+        </div>
+      </div>
+    </div>
   `,
   styles: []
 })
@@ -263,9 +275,10 @@ export class AdminBillModalComponent implements OnChanges {
   @Output() modalClosed = new EventEmitter<boolean>();
 
   reservationId = '';
-  customerId = '';
   isLoading = false;
   error: string | null = null;
+  pendingRemoveItemId: string | null = null;
+  isConfirmRemoveOpen = false;
 
   // Editing logic
   editableTaxRate: number = 0;
@@ -339,7 +352,6 @@ export class AdminBillModalComponent implements OnChanges {
         if (response.success) {
           this.toastService.success('Bill generated successfully!');
           this.reservationId = '';
-          this.customerId = '';
           this.modalClosed.emit(true);
         } else {
           this.error = response.message || 'Failed to generate bill';
@@ -382,8 +394,15 @@ export class AdminBillModalComponent implements OnChanges {
   }
 
   removeItem(itemId: string) {
-    if (!confirm('Are you sure you want to remove this line item?')) return;
-    if (!this.bill) return;
+    this.pendingRemoveItemId = itemId;
+    this.isConfirmRemoveOpen = true;
+  }
+
+  doRemoveItem() {
+    const itemId = this.pendingRemoveItemId;
+    if (!itemId || !this.bill) return;
+    this.pendingRemoveItemId = null;
+    this.isConfirmRemoveOpen = false;
 
     this.isLoading = true;
     this.error = null;
@@ -393,6 +412,7 @@ export class AdminBillModalComponent implements OnChanges {
         if (response.success) {
           this.bill = response.data;
           this.updateEditableMetrics();
+          this.toastService.success('Line item removed successfully.');
         } else {
           this.error = response.message || 'Failed to remove item';
         }

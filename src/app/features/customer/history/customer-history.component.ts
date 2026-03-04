@@ -111,18 +111,24 @@ import { ToastService } from '../../../core/services/toast.service';
                                 <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-muted/40 hover:bg-muted text-foreground transition-colors" (click)="openDetails(booking)">
                                     View Details
                                 </button>
-                                <div class="flex gap-1.5">
-                                    <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors" [routerLink]="['/customer/modify-booking', booking.reservationId]">
-                                        Modify
+                                @if (booking.paymentStatus === 'PENDING' || booking.paymentStatus === 'PARTIAL' || booking.status === 'PENDING_PAYMENT') {
+                                    <button class="w-full text-xs font-bold px-3 py-1.5 rounded-md text-primary-foreground bg-primary hover:bg-primary/90 transition-colors shadow-sm" [routerLink]="['/customer/payment', booking.reservationId]">
+                                        Pay Balance
                                     </button>
-                                    <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-destructive hover:bg-destructive/90 text-white transition-colors" (click)="openCancelModal(booking)">
-                                        Cancel
+                                } @else {
+                                    <div class="flex gap-1.5">
+                                        <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors" [routerLink]="['/customer/modify-booking', booking.reservationId]">
+                                            Modify
+                                        </button>
+                                        <button class="flex-1 text-xs font-medium px-3 py-1.5 rounded-md bg-destructive hover:bg-destructive/90 text-white transition-colors" (click)="openCancelModal(booking)">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                    <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors flex items-center justify-center gap-1" (click)="downloadInvoiceOrWarn(booking)">
+                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        Invoice
                                     </button>
-                                </div>
-                                <button class="w-full text-xs font-medium px-3 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-foreground transition-colors flex items-center justify-center gap-1" (click)="downloadInvoiceOrWarn(booking)">
-                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                    Invoice
-                                </button>
+                                }
                             </div>
                         } @else {
                             <!-- Past/Cancelled Actions -->

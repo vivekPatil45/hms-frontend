@@ -46,39 +46,69 @@ import { of } from 'rxjs';
         <div class="p-6">
           <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Name -->
+              <!-- Full Name -->
               <div class="space-y-2">
                 <label class="text-sm font-medium text-foreground">Full Name</label>
                 <input
                   type="text"
                   formControlName="fullName"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 @if (profileForm.get('fullName')?.touched && profileForm.get('fullName')?.errors?.['required']) {
                   <p class="text-sm text-destructive">Name is required</p>
                 }
               </div>
 
-              <!-- Email -->
+              <!-- Username (read-only) -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-foreground">Username</label>
+                <input
+                  type="text"
+                  formControlName="username"
+                  class="flex h-10 w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                  [attr.disabled]="true"
+                />
+              </div>
+
+              <!-- Email (disabled) -->
               <div class="space-y-2">
                 <label class="text-sm font-medium text-foreground">Email</label>
                 <input
                   type="email"
                   formControlName="email"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  readonly
+                  class="flex h-10 w-full rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                  [attr.disabled]="true"
                 />
-                <p class="text-xs text-muted-foreground">Email cannot be changed directly</p>
               </div>
 
-              <!-- Phone -->
+              <!-- Mobile Number -->
               <div class="space-y-2">
                 <label class="text-sm font-medium text-foreground">Mobile Number</label>
-                <input
-                  type="tel"
-                  formControlName="mobileNumber"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                />
+                <div class="flex gap-2">
+                  <select
+                    formControlName="countryCode"
+                    class="flex h-10 w-28 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="+91">+91 (IN)</option>
+                    <option value="+1">+1 (US)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (AU)</option>
+                    <option value="+971">+971 (UAE)</option>
+                    <option value="+65">+65 (SG)</option>
+                  </select>
+                  <input
+                    type="tel"
+                    formControlName="mobileNumber"
+                    placeholder="9876543210"
+                    class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    [class.border-destructive]="profileForm.get('mobileNumber')?.touched && profileForm.get('mobileNumber')?.invalid"
+                  />
+                </div>
+                @if (profileForm.get('mobileNumber')?.touched) {
+                  @if (profileForm.get('mobileNumber')?.errors?.['pattern']) {
+                    <p class="text-sm text-destructive">Enter a valid mobile number (8–12 digits)</p>
+                  }
+                }
               </div>
 
               <!-- Address -->
@@ -87,7 +117,7 @@ import { of } from 'rxjs';
                 <textarea
                   formControlName="address"
                   rows="3"
-                  class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 ></textarea>
               </div>
             </div>
@@ -141,8 +171,10 @@ export class CustomerProfileComponent implements OnInit {
   ) {
     this.profileForm = this.fb.group({
       fullName: ['', Validators.required],
+      username: [{ value: '', disabled: true }],
       email: [{ value: '', disabled: true }],
-      mobileNumber: [''],
+      countryCode: ['+91'],
+      mobileNumber: ['', [Validators.pattern('^[0-9]{8,12}$')]],
       address: ['']
     });
   }
@@ -172,12 +204,27 @@ export class CustomerProfileComponent implements OnInit {
         this.isLoading = false;
         if (response && response.data) {
           const userData = response.data;
-          this.user = userData; // Update local user ref
+          this.user = userData;
+
+          // Split stored mobileNumber (e.g. "+91-9876543210") into parts
+          let countryCode = '+91';
+          let mobileNumber = userData.mobileNumber || '';
+          if (mobileNumber.includes('-')) {
+            const parts = mobileNumber.split('-');
+            countryCode = parts[0];
+            mobileNumber = parts[1] || '';
+          } else if (mobileNumber.startsWith('+')) {
+            // Try to extract plain number without country code
+            const match = mobileNumber.match(/^(\+\d{1,3})[- ]?(\d+)$/);
+            if (match) { countryCode = match[1]; mobileNumber = match[2]; }
+          }
 
           this.profileForm.patchValue({
             fullName: userData.fullName,
+            username: userData.username || '',
             email: userData.email,
-            mobileNumber: userData.mobileNumber || '',
+            countryCode,
+            mobileNumber,
             address: userData.address || ''
           });
         }
@@ -212,9 +259,11 @@ export class CustomerProfileComponent implements OnInit {
       this.message = '';
       this.isError = false;
 
+      const countryCode = this.profileForm.get('countryCode')?.value || '+91';
+      const mobileNumber = this.profileForm.get('mobileNumber')?.value || '';
       const updateData: Partial<User> = {
         fullName: this.profileForm.get('fullName')?.value,
-        mobileNumber: this.profileForm.get('mobileNumber')?.value,
+        mobileNumber: mobileNumber ? `${countryCode}-${mobileNumber}` : '',
         address: this.profileForm.get('address')?.value
       };
 

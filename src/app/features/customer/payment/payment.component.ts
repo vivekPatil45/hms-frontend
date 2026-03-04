@@ -25,7 +25,7 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
           <div class="flex justify-between items-center mb-4 border-b border-border pb-4">
             <div>
               <p class="text-sm text-muted-foreground">Total Amount to Pay</p>
-              <h2 class="text-3xl font-bold text-primary">₹{{ reservation.totalAmount }}</h2>
+              <h2 class="text-3xl font-bold text-primary">₹{{ amountToPay }}</h2>
             </div>
             <div class="text-right">
               <p class="text-sm text-foreground font-medium">Reservation ID</p>
@@ -143,7 +143,7 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
               </div>
               <h3 class="text-lg font-semibold text-foreground">Enter OTP</h3>
               <p class="text-sm text-muted-foreground">
-                A 6-digit verification code has been sent to your registered mobile number for the amount of ₹{{ reservation.totalAmount }}.
+                A 6-digit verification code has been sent to your registered mobile number for the amount of ₹{{ amountToPay }}.
               </p>
             </div>
 
@@ -215,6 +215,14 @@ export class PaymentComponent implements OnInit {
   paymentForm: FormGroup;
   otpForm: FormGroup;
   errorMessage: string = '';
+
+  get amountToPay(): number {
+    if (!this.reservation) return 0;
+    if (this.reservation.bill && this.reservation.bill.balanceAmount !== undefined) {
+      return this.reservation.bill.balanceAmount;
+    }
+    return this.reservation.totalAmount;
+  }
 
   // OTP Modal State
   showOtpModal = false;

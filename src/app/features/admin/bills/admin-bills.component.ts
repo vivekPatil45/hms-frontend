@@ -233,6 +233,25 @@ import { ToastService } from '../../../core/services/toast.service';
         (modalClosed)="onModalClosed($event)"
       ></app-admin-bill-modal>
 
+      <!-- Confirm Pay Modal -->
+      <div *ngIf="isConfirmPayOpen" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="p-2 bg-yellow-100 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5C2.962 18.333 3.924 20 5.464 20z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Confirm Payment</h3>
+          </div>
+          <p class="text-gray-600 mb-6">Are you sure you want to mark bill <strong>#{{ pendingPayBill?.billId }}</strong> as <strong>PAID</strong>?</p>
+          <div class="flex justify-end gap-3">
+            <button (click)="isConfirmPayOpen = false; pendingPayBill = null" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button (click)="doMarkPaid()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Yes, Mark as Paid</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   `,
   styles: []
@@ -265,6 +284,8 @@ export class AdminBillsComponent implements OnInit {
   maxAmount = '';
 
   Math = Math;
+  isConfirmPayOpen = false;
+  pendingPayBill: any = null;
 
   constructor(private adminBillService: AdminBillService, private toastService: ToastService) { }
 
@@ -375,23 +396,30 @@ export class AdminBillsComponent implements OnInit {
   }
 
   markPaid(bill: any) {
-    if (confirm(`Are you sure you want to mark bill #${bill.billId} as PAID?`)) {
-      this.isLoading = true;
-      this.adminBillService.markBillAsPaid(bill.billId, bill.balanceAmount, 'CASH').subscribe({
-        next: (res) => {
-          this.isLoading = false;
-          if (res.success) {
-            this.toastService.success(`Bill #${bill.billId} marked as PAID.`);
-            this.loadBills();
-          } else {
-            this.toastService.error(res.message || 'Failed to mark as paid');
-          }
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.toastService.error(err.error?.message || 'Failed to mark as paid');
+    this.pendingPayBill = bill;
+    this.isConfirmPayOpen = true;
+  }
+
+  doMarkPaid() {
+    const bill = this.pendingPayBill;
+    if (!bill) return;
+    this.isConfirmPayOpen = false;
+    this.pendingPayBill = null;
+    this.isLoading = true;
+    this.adminBillService.markBillAsPaid(bill.billId, bill.balanceAmount, 'CASH').subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        if (res.success) {
+          this.toastService.success(`Bill #${bill.billId} marked as PAID.`);
+          this.loadBills();
+        } else {
+          this.toastService.error(res.message || 'Failed to mark as paid');
         }
-      });
-    }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.toastService.error(err.error?.message || 'Failed to mark as paid');
+      }
+    });
   }
 }

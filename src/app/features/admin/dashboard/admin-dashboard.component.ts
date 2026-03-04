@@ -75,21 +75,31 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <!-- Simple Bar Chart Representation -->
           <div class="mt-2 mb-6">
-             <div class="flex items-end justify-between h-24 gap-2 px-4">
-                 <div class="w-full bg-primary/20 rounded-t flex items-end justify-center pb-2 relative group" [style.height.%]="(stats?.dailyBookings / (stats?.monthlyBookings || 1)) * 100 + 10">
-                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.dailyBookings }}</span>
+             <div class="flex items-end justify-between h-32 gap-4 px-4">
+                 <!-- Daily Bar -->
+                 <div class="w-full bg-primary/20 rounded-t flex flex-col items-center justify-end pb-2 relative group transition-all duration-500" 
+                      [style.height.%]="((stats?.dailyBookings || 0) / (stats?.monthlyBookings || 1)) * 100 + 10">
+                    <span class="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6">{{ stats?.dailyBookings || 0 }}</span>
                  </div>
-                 <div class="w-full bg-primary/50 rounded-t flex items-end justify-center pb-2 relative group" [style.height.%]="(stats?.weeklyBookings / (stats?.monthlyBookings || 1)) * 100 + 10">
-                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.weeklyBookings }}</span>
+                 
+                 <!-- Weekly Bar -->
+                 <div class="w-full bg-primary/50 rounded-t flex flex-col items-center justify-end pb-2 relative group transition-all duration-500" 
+                      [style.height.%]="((stats?.weeklyBookings || 0) / (stats?.monthlyBookings || 1)) * 100 + 10">
+                    <span class="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6">{{ stats?.weeklyBookings || 0 }}</span>
                  </div>
-                 <div class="w-full bg-primary rounded-t flex items-end justify-center pb-2 relative group" style="height: 100%;">
-                    <span class="text-xs font-semibold text-primary group-hover:block hidden absolute -top-5">{{ stats?.monthlyBookings }}</span>
+                 
+                 <!-- Monthly Bar -->
+                 <div class="w-full bg-primary rounded-t flex flex-col items-center justify-end pb-2 relative group transition-all duration-500" 
+                      style="height: 100%;">
+                    <span class="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity absolute -top-6">{{ stats?.monthlyBookings || 0 }}</span>
                  </div>
              </div>
-             <div class="flex justify-between px-4 mt-2 text-xs text-muted-foreground border-t border-border pt-2">
-                 <span class="w-full text-center">Daily</span>
-                 <span class="w-full text-center">Weekly</span>
-                 <span class="w-full text-center">Monthly</span>
+             
+             <!-- Labels -->
+             <div class="flex justify-between px-4 mt-2 text-xs text-muted-foreground border-t border-border pt-3">
+                 <span class="w-full text-center font-medium uppercase tracking-wider">Daily</span>
+                 <span class="w-full text-center font-medium uppercase tracking-wider">Weekly</span>
+                 <span class="w-full text-center font-medium uppercase tracking-wider">Monthly</span>
              </div>
           </div>
 

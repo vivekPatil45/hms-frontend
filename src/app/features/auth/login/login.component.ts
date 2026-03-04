@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -123,7 +124,8 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
@@ -142,6 +144,7 @@ export class LoginComponent {
       this.authService.login({ username, password }).subscribe({
         next: (user) => {
           this.isLoading = false;
+          this.toastService.success(`Welcome back, ${user.fullName || user.username}! 👋`);
           // Navigate based on role
           if (user.requirePasswordChange) {
             this.router.navigate(['/auth/change-password']);

@@ -8,14 +8,14 @@ import { ToastService } from '../../../core/services/toast.service';
 import { User } from '../../../models/user.model';
 
 @Component({
-  selector: 'app-admin-profile',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, LoadingSpinnerComponent],
-  template: `
+    selector: 'app-staff-profile',
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, ButtonComponent, LoadingSpinnerComponent],
+    template: `
     <div class="space-y-6 animate-fade-in max-w-3xl mx-auto">
       <div>
         <h1 class="text-3xl font-bold text-foreground">My Profile</h1>
-        <p class="text-muted-foreground mt-1">Manage your administrator account details</p>
+        <p class="text-muted-foreground mt-1">Manage your staff account details</p>
       </div>
 
       <div class="bg-card rounded-xl border border-border overflow-hidden">
@@ -28,7 +28,7 @@ import { User } from '../../../models/user.model';
             <h2 class="text-xl font-semibold text-foreground">{{ profileForm.get('fullName')?.value || user?.fullName }}</h2>
             <p class="text-sm text-muted-foreground">{{ user?.email }}</p>
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary mt-2">
-              Admin
+              Staff
             </span>
           </div>
         </div>
@@ -127,79 +127,78 @@ import { User } from '../../../models/user.model';
     </div>
   `
 })
-export class AdminProfileComponent implements OnInit {
-  profileForm: FormGroup;
-  isLoading = false;
-  user: User | null = null;
+export class StaffProfileComponent implements OnInit {
+    profileForm: FormGroup;
+    isLoading = false;
+    user: User | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private toastService: ToastService
-  ) {
-    this.profileForm = this.fb.group({
-      fullName: ['', Validators.required],
-      username: [{ value: '', disabled: true }],
-      email: [{ value: '', disabled: true }],
-      countryCode: ['+91'],
-      mobileNumber: ['', [Validators.pattern('^[0-9]{8,12}$')]],
-      address: ['']
-    });
-  }
-
-  ngOnInit() {
-    this.authService.currentUser$.subscribe(user => {
-      if (user) {
-        this.user = user;
-
-        let countryCode = '+91';
-        let mobileNumber = user.mobileNumber || '';
-        if (mobileNumber.includes('-')) {
-          const parts = mobileNumber.split('-');
-          countryCode = parts[0];
-          mobileNumber = parts[1] || '';
-        }
-
-        this.profileForm.patchValue({
-          fullName: user.fullName,
-          username: user.username || '',
-          email: user.email,
-          countryCode,
-          mobileNumber,
-          address: (user as any).address || ''
+    constructor(
+        private fb: FormBuilder,
+        private authService: AuthService,
+        private toastService: ToastService
+    ) {
+        this.profileForm = this.fb.group({
+            fullName: ['', Validators.required],
+            username: [{ value: '', disabled: true }],
+            email: [{ value: '', disabled: true }],
+            countryCode: ['+91'],
+            mobileNumber: ['', [Validators.pattern('^[0-9]{8,12}$')]],
+            address: ['']
         });
-      }
-    });
-  }
-
-  getInitials(): string {
-    const name = this.profileForm.get('fullName')?.value || this.user?.fullName || '';
-    return name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
-  }
-
-  onSubmit() {
-    if (this.profileForm.valid && this.user) {
-      this.isLoading = true;
-      const countryCode = this.profileForm.get('countryCode')?.value || '+91';
-      const mobileNumber = this.profileForm.get('mobileNumber')?.value || '';
-
-      const updateData = {
-        fullName: this.profileForm.get('fullName')?.value,
-        mobileNumber: mobileNumber ? `${countryCode}-${mobileNumber}` : '',
-        address: this.profileForm.get('address')?.value
-      };
-
-      // Update session locally since admin uses same auth service
-      this.authService.updateSession(updateData);
-      this.toastService.success('Profile updated successfully!');
-      this.profileForm.markAsPristine();
-      this.isLoading = false;
     }
-  }
 
-  logout() {
-    this.authService.logout().subscribe(() => {
-      window.location.href = '/auth/login';
-    });
-  }
+    ngOnInit() {
+        this.authService.currentUser$.subscribe(user => {
+            if (user) {
+                this.user = user;
+
+                let countryCode = '+91';
+                let mobileNumber = user.mobileNumber || '';
+                if (mobileNumber.includes('-')) {
+                    const parts = mobileNumber.split('-');
+                    countryCode = parts[0];
+                    mobileNumber = parts[1] || '';
+                }
+
+                this.profileForm.patchValue({
+                    fullName: user.fullName,
+                    username: user.username || '',
+                    email: user.email,
+                    countryCode,
+                    mobileNumber,
+                    address: (user as any).address || ''
+                });
+            }
+        });
+    }
+
+    getInitials(): string {
+        const name = this.profileForm.get('fullName')?.value || this.user?.fullName || '';
+        return name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+    }
+
+    onSubmit() {
+        if (this.profileForm.valid && this.user) {
+            this.isLoading = true;
+            const countryCode = this.profileForm.get('countryCode')?.value || '+91';
+            const mobileNumber = this.profileForm.get('mobileNumber')?.value || '';
+
+            const updateData = {
+                fullName: this.profileForm.get('fullName')?.value,
+                mobileNumber: mobileNumber ? `${countryCode}-${mobileNumber}` : '',
+                address: this.profileForm.get('address')?.value
+            };
+
+            this.authService.updateSession(updateData);
+            this.toastService.success('Profile updated successfully!');
+            this.profileForm.markAsPristine();
+            this.isLoading = false;
+        }
+    }
+
+    logout() {
+        this.authService.logout().subscribe(() => {
+            window.location.href = '/auth/login';
+        });
+    }
 }

@@ -374,6 +374,29 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
         </div>
       </div>
     </div>
+
+    <!-- Confirm Modal -->
+    <div *ngIf="confirmModal.isOpen" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="p-2 bg-yellow-100 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5C2.962 18.333 3.924 20 5.464 20z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Confirm Action</h3>
+        </div>
+        <p class="text-gray-600 mb-6">{{ confirmModal.message }}</p>
+        <div class="flex justify-end gap-3">
+          <button (click)="confirmModal.isOpen = false" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button (click)="confirmModal.onConfirm(); confirmModal.isOpen = false" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
   `
 })
 export class AdminUsersComponent implements OnInit {
@@ -401,10 +424,16 @@ export class AdminUsersComponent implements OnInit {
 
   messageModal = {
     isOpen: false,
-    type: 'success', // 'success' | 'info'
+    type: 'success',
     title: '',
     message: '',
     data: null as any
+  };
+
+  confirmModal = {
+    isOpen: false,
+    message: '',
+    onConfirm: () => { }
   };
 
   protected readonly Math = Math;
@@ -575,44 +604,56 @@ export class AdminUsersComponent implements OnInit {
   }
 
   confirmDeactivate(user: UserResponse) {
-    if (confirm(`Are you sure you want to deactivate the customer?`)) {
-      this.adminUserService.deactivateUser(user.userId).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.loadUsers();
-            this.showMessage('Success', 'User deactivated successfully');
-          }
-        },
-        error: (error) => this.showMessage('Error', 'Failed to deactivate user')
-      });
-    }
+    this.confirmModal = {
+      isOpen: true,
+      message: `Are you sure you want to deactivate ${user.username}?`,
+      onConfirm: () => {
+        this.adminUserService.deactivateUser(user.userId).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.loadUsers();
+              this.showMessage('Success', 'User deactivated successfully');
+            }
+          },
+          error: () => this.showMessage('Error', 'Failed to deactivate user')
+        });
+      }
+    };
   }
 
   confirmActivate(user: UserResponse) {
-    if (confirm(`Are you sure you want to activate ${user.username}?`)) {
-      this.adminUserService.activateUser(user.userId).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.loadUsers();
-            this.showMessage('Success', 'User activated successfully');
-          }
-        },
-        error: (error) => this.showMessage('Error', 'Failed to activate user')
-      });
-    }
+    this.confirmModal = {
+      isOpen: true,
+      message: `Are you sure you want to activate ${user.username}?`,
+      onConfirm: () => {
+        this.adminUserService.activateUser(user.userId).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.loadUsers();
+              this.showMessage('Success', 'User activated successfully');
+            }
+          },
+          error: () => this.showMessage('Error', 'Failed to activate user')
+        });
+      }
+    };
   }
 
   confirmResetPassword(user: UserResponse) {
-    if (confirm(`Are you sure you want to reset password for ${user.username}?`)) {
-      this.adminUserService.resetPassword(user.userId).subscribe({
-        next: (response) => {
-          if (response.success && response.data) {
-            this.showMessage('Success', 'Password reset successfully', 'success', response.data);
-          }
-        },
-        error: (error) => this.showMessage('Error', 'Failed to reset password')
-      });
-    }
+    this.confirmModal = {
+      isOpen: true,
+      message: `Are you sure you want to reset password for ${user.username}?`,
+      onConfirm: () => {
+        this.adminUserService.resetPassword(user.userId).subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.showMessage('Success', 'Password reset successfully', 'success', response.data);
+            }
+          },
+          error: () => this.showMessage('Error', 'Failed to reset password')
+        });
+      }
+    };
   }
 
   showMessage(title: string, message: string, type: 'success' | 'info' | 'error' = 'success', data: any = null) {

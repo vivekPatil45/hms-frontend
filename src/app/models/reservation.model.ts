@@ -23,6 +23,7 @@ export interface Reservation {
     paymentStatus: string;
     paymentMethod?: string;
     transactionId?: string;
+    bill?: any;
     specialRequests?: string;
     createdAt?: string;
     updatedAt?: string;
